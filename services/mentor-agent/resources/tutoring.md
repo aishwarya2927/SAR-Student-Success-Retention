@@ -1,0 +1,5 @@
+The Academic Tutoring Center, located in Room 214 of the Main Block, offers free drop-in and scheduled tutoring for all first- and second-year core subjects, with a particular focus on Data Structures, Computer Networks, Mathematics, and Digital Electronics. 
+Drop-in sessions run Monday through Friday, 10:00 AM to 6:00 PM, staffed by trained senior students and teaching assistants who have scored above 8.5 CGPA in the relevant subject. 
+Students who are carrying two or more backlogs are automatically eligible for a dedicated one-on-one slot twice a week with a faculty-supervised tutor; this can be requested through the mentor or directly via the tutoring center's online booking form. 
+Sessions typically focus on clearing conceptual gaps, working through previous years' question papers, and building a structured revision plan ahead of internal assessments. 
+Students do not need prior approval to attend drop-in hours, but the dedicated backlog-support slots should be booked at least two days in advance to guarantee a tutor's availability.
