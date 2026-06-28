@@ -85,13 +85,7 @@ def run_agent(student_id: str):
     )
 
     return {
-
-        "recommendation_text":
-        recommendation,
-
-        "tools_called":
-        tools_called,
-
-        "status":
-        "pending_approval"
-    }
+    **recommendation,
+    "tools_called": tools_called,
+    "status": "pending_approval"
+}

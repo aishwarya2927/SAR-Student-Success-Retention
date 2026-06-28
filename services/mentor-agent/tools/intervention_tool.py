@@ -1,3 +1,4 @@
+import json
 from llm.gemini_client import generate_text
 
 def draft_intervention_plan(
@@ -69,30 +70,37 @@ Top Risk Factors
 
 {resource_text}
 
-Generate a professional intervention plan for the assigned faculty mentor.
+Return ONLY a valid JSON object.
 
-Use the following structure exactly:
+Use this exact schema:
 
-1. Student Summary
-2. Recommended Actions
-3. Priority Level
-4. Follow-up Plan
+{{
+  "student_summary": "string",
+  "recommended_actions": [
+    "string",
+    "string"
+  ],
+  "priority_level": "High | Medium | Low",
+  "follow_up_plan": "string"
+}}
 
 Requirements:
-- Use a professional and concise tone.
+- Do not include markdown.
+- Do not wrap the JSON in ``` blocks.
+- Do not include explanations before or after the JSON.
 - Recommend only actions supported by the provided information.
 - Mention relevant university resources where applicable.
 - Do not invent student information.
-- Return only the intervention plan.
 """
 
     try:
-      recommendation = generate_text(prompt)
+        recommendation = generate_text(prompt)
+
+        recommendation = json.loads(recommendation)
 
     except Exception as e:
-        recommendation = (
-            "Unable to generate intervention plan at this time. "
-            f"Error: {str(e)}"
-        )
+        recommendation = {
+            "error": f"Unable to generate intervention plan: {str(e)}"
+        }
 
     return recommendation
