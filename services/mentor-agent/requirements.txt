@@ -1,6 +1,14 @@
 fastapi
 uvicorn
 requests
+
 chromadb
 langchain
+langchain-community
+langchain-huggingface
+
 sentence-transformers
+pypdf
+
+google-genai
+python-dotenv

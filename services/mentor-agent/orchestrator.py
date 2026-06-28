@@ -1,8 +1,8 @@
-from tools.risk_tool import get_risk_profile
+from tools.get_risk_profile import get_risk_profile
 from tools.scholarship_tool import (
     check_scholarship_eligibility
 )
-from tools.resource_tool import (
+from tools.search_support_resources import (
     search_support_resources
 )
 from tools.intervention_tool import (
@@ -44,7 +44,7 @@ def run_agent(student_id: str):
         gathered_info["scholarship"] = (
             check_scholarship_eligibility(
                 student_id,
-                45
+                risk_profile["fee_delay_days"]
             )
         )
 
@@ -52,16 +52,21 @@ def run_agent(student_id: str):
             "check_scholarship_eligibility"
         )
 
-    if (
-        "backlog_count" in factors
-        or
-        "gpa_trend" in factors
-    ):
+    resource_query = None
+
+    if "backlog_count" in factors:
+      resource_query = "support for students with academic backlogs"
+
+    elif "gpa_trend" in factors:
+      resource_query = "study skills and tutoring for low GPA"
+
+    elif "attendance_drop" in factors:
+        resource_query = "attendance counselling and mentoring"
+
+    if resource_query:
 
         gathered_info["resources"] = (
-            search_support_resources(
-                "academic support"
-            )
+            search_support_resources(resource_query)
         )
 
         tools_called.append(
@@ -69,11 +74,11 @@ def run_agent(student_id: str):
         )
 
     recommendation = (
-        draft_intervention_plan(
-            risk_profile,
-            gathered_info
+            draft_intervention_plan(
+                risk_profile,
+                gathered_info
+            )
         )
-    )
 
     tools_called.append(
         "draft_intervention_plan"

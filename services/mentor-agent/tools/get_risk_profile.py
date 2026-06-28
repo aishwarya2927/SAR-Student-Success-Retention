@@ -11,6 +11,7 @@ def get_risk_profile(student_id: str) -> dict:
             "student_id": "S1001",
             "risk_score": 85,
             "risk_band": "high",
+            "fee_delay_days": 45,
             "top_factors": [
                 {"feature": "fee_delay"},
                 {"feature": "backlog_count"}
@@ -21,6 +22,7 @@ def get_risk_profile(student_id: str) -> dict:
             "student_id": "S1002",
             "risk_score": 55,
             "risk_band": "medium",
+            "fee_delay_days": 12,
             "top_factors": [
                 {"feature": "attendance_drop"}
             ]

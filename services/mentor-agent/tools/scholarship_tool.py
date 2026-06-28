@@ -1,9 +1,10 @@
 def check_scholarship_eligibility(
     student_id: str,
     fee_delay_days: int
-) -> dict:
+):
 
-    if fee_delay_days > 30:
+    if fee_delay_days >= 30:
+
         return {
             "eligible": True,
             "message":
@@ -13,5 +14,6 @@ def check_scholarship_eligibility(
     return {
         "eligible": False,
         "message":
-        "Student is not eligible."
+        "Fee delay is below scholarship review threshold."
     }
+
