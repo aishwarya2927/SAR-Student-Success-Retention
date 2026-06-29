@@ -31,40 +31,39 @@ def run_agent(student_id: str):
             "pending_approval"
         }
 
-    factors = [
-        factor["feature"]
-        for factor
-        in risk_profile["top_factors"]
-    ]
+    # Top factors will be provided by the Risk Engine
+    # once SHAP explainability is implemented.
+
+    factors = []
 
     gathered_info = {}
 
-    if "fee_delay" in factors:
+    # if "fee_delay" in factors:
 
-        gathered_info["scholarship"] = (
-            check_scholarship_eligibility(
-                student_id,
-                risk_profile["fee_delay_days"]
-            )
-        )
+    #     gathered_info["scholarship"] = (
+    #         check_scholarship_eligibility(
+    #             student_id,
+    #             risk_profile["fee_delay_days"]
+    #         )
+    #     )
 
-        tools_called.append(
-            "check_scholarship_eligibility"
-        )
+    #     tools_called.append(
+    #         "check_scholarship_eligibility"
+    #     )
 
-    for factor in factors:
+    # for factor in factors:
 
-        resources = search_support_resources(factor)
+    #     resources = search_support_resources(factor)
 
-        if resources:
+    #     if resources:
 
-            gathered_info["resources"] = resources
+    #         gathered_info["resources"] = resources
 
-            tools_called.append(
-                "search_support_resources"
-            )
+    #         tools_called.append(
+    #             "search_support_resources"
+    #         )
 
-            break
+    #         break
 
     recommendation = (
             draft_intervention_plan(
@@ -82,3 +81,9 @@ def run_agent(student_id: str):
     "tools_called": tools_called,
     "status": "pending_approval"
 }
+
+if __name__ == "__main__":
+
+    result = run_agent("STU202600033")
+
+    print(result)

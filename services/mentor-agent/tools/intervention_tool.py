@@ -6,11 +6,15 @@ def draft_intervention_plan(
     gathered_info: dict
 ) -> str:
 
-    # Format top risk factors
-    top_factors = "\n".join(
-        f"- {factor['feature'].replace('_', ' ').title()}"
-        for factor in risk_profile["top_factors"]
-    )
+    # Format top risk factors (if available)
+    top_factors = "Not available."
+
+    if "top_factors" in risk_profile:
+
+        top_factors = "\n".join(
+            f"- {factor['feature'].replace('_', ' ').title()}"
+            for factor in risk_profile["top_factors"]
+        )
 
     # Format scholarship information
     scholarship_info = ""
