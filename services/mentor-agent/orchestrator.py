@@ -52,26 +52,19 @@ def run_agent(student_id: str):
             "check_scholarship_eligibility"
         )
 
-    resource_query = None
+    for factor in factors:
 
-    if "backlog_count" in factors:
-      resource_query = "support for students with academic backlogs"
+        resources = search_support_resources(factor)
 
-    elif "gpa_trend" in factors:
-      resource_query = "study skills and tutoring for low GPA"
+        if resources:
 
-    elif "attendance_drop" in factors:
-        resource_query = "attendance counselling and mentoring"
+            gathered_info["resources"] = resources
 
-    if resource_query:
+            tools_called.append(
+                "search_support_resources"
+            )
 
-        gathered_info["resources"] = (
-            search_support_resources(resource_query)
-        )
-
-        tools_called.append(
-            "search_support_resources"
-        )
+            break
 
     recommendation = (
             draft_intervention_plan(
