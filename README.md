@@ -79,7 +79,7 @@ Stores a timestamped log of risk scores per student over time (for future trend 
 
 - **`score_source` is intentionally not displayed anywhere in the dashboard UI.** It exists purely so the team can run `SELECT * FROM students WHERE score_source='fallback'` to verify which scores actually came from the live model vs. an estimated fallback, without exposing that to faculty users.
 - `current_year` is stored as the raw numeric value (1–4) from the dataset; the dashboard maps it to FY/SY/TY/Final Year for display and filtering only — the underlying data is untouched.
-- The mentor list (`MENTOR_LIST`) and escalation contact list (`ESCALATION_CONTACTS`) are plain Python lists at the top of `app.py` for now — edit them directly as your team's mentor/contact roster changes. Could move to their own DB table later if this grows.
+- The mentor list (`MENTOR_LIST`) and escalation contact list (`ESCALATION_CONTACTS`) are plain Python lists at the top of `app.py` for now. Could move to their own DB table later if this grows.
 - `dataset.csv` and `dashboard.db` are excluded from version control (see `.gitignore`) since they contain student data.
 
 ## Status
