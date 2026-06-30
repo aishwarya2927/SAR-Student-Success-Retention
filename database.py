@@ -11,6 +11,7 @@ cursor.execute("""
 CREATE TABLE IF NOT EXISTS students(
     student_id TEXT PRIMARY KEY, 
     department TEXT,
+    current_year TEXT,
     academic_risk_band TEXT,
     attendance_percentage REAL, 
     backlog_count INTEGER, 
@@ -18,7 +19,8 @@ CREATE TABLE IF NOT EXISTS students(
     cgpa REAL,
     recommended_intervention TEXT,
     risk_score REAL,
-    risk_band TEXT
+    risk_band TEXT,
+    score_source TEXT
 )
 """)
 
@@ -61,6 +63,8 @@ def band_to_simple(band):
     else: return "low"
 
 # New function — calls real API
+# Now returns a THIRD value: source = "api" or "fallback", so we always know
+# which students actually got a real XGBoost score vs an estimated one.
 def get_real_risk(row):
     try:
         student_dict = row.to_dict()
@@ -70,23 +74,37 @@ def get_real_risk(row):
             json=student_dict,
             timeout=5
         )
+        response.raise_for_status()  # don't silently accept HTTP errors (4xx/5xx)
         result = response.json()
-        return result["risk_score"], result["risk_band"].lower()
-    except:
-        return band_to_score(row["academic_risk_band"]), band_to_simple(row["academic_risk_band"])
 
-# Use only first 100 students for now
+        # Validate the response actually has what we expect before trusting it
+        if "risk_score" not in result or "risk_band" not in result:
+            raise ValueError(f"API response missing expected keys: {result}")
+
+        return result["risk_score"], result["risk_band"].lower(), "api"
+
+    except Exception as e:
+        print(f"  [WARN] API call failed for {row['student_id']}: {e}")
+        return band_to_score(row["academic_risk_band"]), band_to_simple(row["academic_risk_band"]), "fallback"
+
+# Use only first 200 students for now
 df = df.head(200)
 
 print("Getting real risk scores from Person A's API...")
-df[["risk_score", "risk_band"]] = df.apply(
+df[["risk_score", "risk_band", "score_source"]] = df.apply(
     lambda row: pd.Series(get_real_risk(row)), axis=1
 )
-print("Real scores fetched!")
+
+n_api = (df["score_source"] == "api").sum()
+n_fallback = (df["score_source"] == "fallback").sum()
+print(f"Done. {n_api} scored by API, {n_fallback} fell back to estimated scores.")
+if n_fallback > 0:
+    print(f"  -> Fallback student_ids: {df[df['score_source']=='fallback']['student_id'].tolist()}")
 
 df_students = df[[
     "student_id",
     "department", 
+    "current_year",
     "cgpa",
     "attendance_percentage",
     "backlog_count",
@@ -94,7 +112,8 @@ df_students = df[[
     "academic_risk_band",
     "recommended_intervention",
     "risk_score",
-    "risk_band"
+    "risk_band",
+    "score_source"
 ]]
 
 df_students.to_sql("students", conn, if_exists="replace", index=False)
