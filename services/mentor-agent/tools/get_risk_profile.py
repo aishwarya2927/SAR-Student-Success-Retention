@@ -5,13 +5,22 @@ RISK_ENGINE_URL = "http://127.0.0.1:8000"
 
 def get_risk_profile(student_id: str) -> dict:
     """
-    Fetch student's risk profile from Person A's Risk Engine.
+    Fetches a student's risk profile from the Risk Engine API.
     """
 
-    response = requests.get(
-        f"{RISK_ENGINE_URL}/predict/{student_id}"
-    )
+    try:
 
-    response.raise_for_status()
+        response = requests.get(
+            f"{RISK_ENGINE_URL}/predict/{student_id}",
+            timeout=10
+        )
 
-    return response.json()
+        response.raise_for_status()
+
+        return response.json()
+
+    except requests.RequestException as e:
+
+        raise Exception(
+            f"Risk Engine API Error: {str(e)}"
+        )

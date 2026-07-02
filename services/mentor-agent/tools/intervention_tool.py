@@ -1,15 +1,20 @@
 import json
+
 from llm.gemini_client import generate_text
+
 
 def draft_intervention_plan(
     risk_profile: dict,
     gathered_info: dict
-) -> str:
+) -> dict:
+    """
+    Generates a structured intervention plan using the Gemini LLM.
+    """
 
     # Format top risk factors (if available)
     top_factors = "Not available."
 
-    if "top_factors" in risk_profile:
+    if risk_profile.get("top_factors"):
 
         top_factors = "\n".join(
             f"- {factor['feature'].replace('_', ' ').title()}"
@@ -39,32 +44,35 @@ Reason:
 {scholarship['message']}
 """
 
-    # Format retrieved resources
+    # Format retrieved university resources
     resource_text = ""
 
-    if "resources" in gathered_info:
+    if gathered_info.get("resources"):
 
-        resource_text = "Relevant University Resources\n\n"
+        resource_text = "Relevant University Support Resources\n\n"
 
         for index, resource in enumerate(
             gathered_info["resources"],
             start=1
         ):
 
-            resource_text += f"{index}. {resource}\n\n"
+            resource_text += (
+                f"{index}. {resource}\n\n"
+            )
 
-    # NOW create the prompt
     prompt = f"""
 You are an experienced university academic mentor.
 
 Student ID:
 {risk_profile["student_id"]}
 
-Risk Band:
+Predicted Risk Band:
 {risk_profile["risk_band"]}
 
-Risk Score:
-{risk_profile["risk_score"]}
+Model Confidence:
+{risk_profile["confidence"] * 100:.2f}%
+
+The confidence represents how certain the prediction model is about the assigned risk band. It is NOT a measure of the student's level of risk.
 
 Top Risk Factors
 
@@ -98,13 +106,19 @@ Requirements:
 """
 
     try:
+
         recommendation = generate_text(prompt)
 
-        recommendation = json.loads(recommendation)
+        return json.loads(recommendation)
 
-    except Exception as e:
-        recommendation = {
-            "error": f"Unable to generate intervention plan: {str(e)}"
+    except json.JSONDecodeError:
+
+        return {
+            "error": "Gemini returned an invalid JSON response."
         }
 
-    return recommendation
+    except Exception as e:
+
+        return {
+            "error": f"Unable to generate intervention plan: {str(e)}"
+        }
