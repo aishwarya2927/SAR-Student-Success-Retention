@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS mentoring_workflow (
 
 conn.commit()
 
-df = pd.read_csv("dataset.csv")
+df = pd.read_csv("student_success_dataset_30000.csv")
 
 # Keep old functions as fallback
 def band_to_score(band):
