@@ -12,18 +12,20 @@ SHAP_PKL     = NOTEBOOK_DIR / "shap_outputs" / "shap_values.pkl"
 
 DATASET_PATH = PROJECT_ROOT / "datasets" / "student_success_dataset_30000.csv"
 
-# ── Columns to strip from raw input before passing to pipeline ────────────────
-# student_id is an identifier, not a feature.
-# The remaining entries are leakage columns that the pipeline still expects
-# (they were included at training time).  Remove from this list once the model
-# is retrained without them.
+
 NON_FEATURE_COLS = [
     "student_id",
-    # leakage — still in current pipeline, keep feeding them for now
-    # "recommended_intervention",
-    # "recommended_career_path",
-    # "recommended_certification",
-    # "recommended_course_track",
+    "academic_risk_score",
+    "academic_risk_band",
+    "dropout_risk_band",
+    "placement_risk_band",
+    "placement_probability",
+    "placement_readiness_score",
+    "career_readiness_score",
+    "recommended_intervention",
+    "recommended_career_path",
+    "recommended_certification",
+    "recommended_course_track"
 ]
 
 

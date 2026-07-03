@@ -1,45 +1,45 @@
 {
     "student_id": "STU202628848",
     "predicted_risk": "Medium",
-    "confidence": 0.9983,
+    "confidence": 0.9986,
     "class_probabilities": {
         "Critical": 0.0001,
-        "High": 0.0005,
-        "Low": 0.0011,
-        "Medium": 0.9983
+        "High": 0.0009,
+        "Low": 0.0004,
+        "Medium": 0.9986
     },
     "top_factors": [
         {
             "feature": "backlog_count",
-            "shap_value": 2.4928,
+            "shap_value": 2.7595,
             "feature_value": 2.0,
             "direction": "↑ increases risk"
         },
         {
-            "feature": "recommended_intervention",
-            "shap_value": 1.0429,
-            "feature_value": 3.0,
-            "direction": "↑ increases risk"
-        },
-        {
-            "feature": "internal_marks_avg",
-            "shap_value": -0.2931,
-            "feature_value": 88.74,
-            "direction": "↓ decreases risk"
-        },
-        {
             "feature": "stress_score",
-            "shap_value": 0.1974,
+            "shap_value": 0.126,
             "feature_value": 69.99,
             "direction": "↑ increases risk"
         },
         {
-            "feature": "mock_interview_score",
-            "shap_value": -0.1038,
-            "feature_value": 88.15,
+            "feature": "semester_gpa",
+            "shap_value": -0.0855,
+            "feature_value": 9.14,
             "direction": "↓ decreases risk"
+        },
+        {
+            "feature": "cgpa",
+            "shap_value": 0.0794,
+            "feature_value": 8.51,
+            "direction": "↑ increases risk"
+        },
+        {
+            "feature": "cybersecurity_score",
+            "shap_value": 0.068,
+            "feature_value": 80.09,
+            "direction": "↑ increases risk"
         }
     ],
-    "human_explanation": "============================================================\n  Student Explanation Report\n============================================================\n  Student ID          : STU202628848\n  True Risk Band      : Medium\n  Predicted Risk Band : Medium\n\n  Class Probabilities:\n    Medium     99.8%  ███████████████████\n    Low         0.1%  \n    High        0.1%  \n    Critical    0.0%  \n\n  Top Contributing Factors:\n    1. backlog_count                        SHAP: +2.4928  ↑ increases risk\n    2. recommended_intervention             SHAP: +1.0429  ↑ increases risk\n    3. internal_marks_avg                   SHAP: -0.2931  ↓ decreases risk\n    4. stress_score                         SHAP: +0.1974  ↑ increases risk\n    5. mock_interview_score                 SHAP: -0.1038  ↓ decreases risk\n\n  Overall Interpretation:\n\n    This student is predicted to be at moderate academic risk.\n\n    The primary risk-increasing factors are: backlog_count,\n    recommended_intervention, stress_score.\n\n    Protective factors working in their favour include:\n    internal_marks_avg, mock_interview_score.\n\n    Monitor closely. Book a check-in meeting within the next two weeks\n    and share targeted academic resources.\n\n============================================================",
-    "generated_at": "2026-06-28T18:25:28.525143Z"
+    "human_explanation": "============================================================\n  Student Explanation Report\n============================================================\n  Student ID          : STU202628848\n  True Risk Band      : Medium\n  Predicted Risk Band : Medium\n\n  Class Probabilities:\n    Medium     99.9%  ███████████████████\n    High        0.1%  \n    Low         0.0%  \n    Critical    0.0%  \n\n  Top Contributing Factors:\n    1. backlog_count                        SHAP: +2.7595  ↑ increases risk\n    2. stress_score                         SHAP: +0.1260  ↑ increases risk\n    3. semester_gpa                         SHAP: -0.0855  ↓ decreases risk\n    4. cgpa                                 SHAP: +0.0794  ↑ increases risk\n    5. cybersecurity_score                  SHAP: +0.0680  ↑ increases risk\n\n  Overall Interpretation:\n\n    This student is predicted to be at moderate academic risk.\n\n    The primary risk-increasing factors are: backlog_count,\n    stress_score, cgpa.\n\n    Protective factors working in their favour include: semester_gpa.\n\n    Monitor closely. Book a check-in meeting within the next two weeks\n    and share targeted academic resources.\n\n============================================================",
+    "generated_at": "2026-07-03T11:08:13.426578Z"
 }

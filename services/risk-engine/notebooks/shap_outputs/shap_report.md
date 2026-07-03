@@ -1,7 +1,7 @@
 # SHAP Explainability Report
 ## Academic Risk Band Prediction — Student Success & Retention Platform
  
-*Generated: 2026-06-28 18:25 UTC*
+*Generated: 2026-07-03 11:08 UTC*
  
 ---
  
@@ -23,7 +23,7 @@ The goal is to make the model's predictions **interpretable and actionable** for
 | Property | Value |
 | --- | --- |
 | Total students | 30,000 |
-| Features used | 62 (after leakage removal) |
+| Features used | 58 (after leakage removal) |
 | Target variable | `academic_risk_band` |
 | Classes | Critical / High / Medium / Low |
 | Class distribution | Low ≈ 81% · Medium ≈ 12.5% · High ≈ 5.6% · Critical ≈ 0.55% |
@@ -51,36 +51,36 @@ Mean absolute SHAP value aggregated across all 30,000 students and all 4 classes
  
 | Rank | Feature | Mean |SHAP| | % of Total |
 | --- | --- | --- | --- |
-| 1 | `backlog_count` | 2.606828 | 40.77% |
-| 2 | `recommended_intervention` | 1.644925 | 25.72% |
-| 3 | `attendance_percentage` | 0.202425 | 3.17% |
-| 4 | `internal_marks_avg` | 0.188837 | 2.95% |
-| 5 | `assignment_submission_rate` | 0.154601 | 2.42% |
-| 6 | `financial_stress_score` | 0.149221 | 2.33% |
-| 7 | `course_completion_rate` | 0.138672 | 2.17% |
-| 8 | `stress_score` | 0.138288 | 2.16% |
-| 9 | `time_management_score` | 0.086553 | 1.35% |
-| 10 | `video_watch_percentage` | 0.062647 | 0.98% |
-| 11 | `aptitude_score` | 0.052950 | 0.83% |
-| 12 | `semester_gpa` | 0.041449 | 0.65% |
-| 13 | `cybersecurity_score` | 0.039182 | 0.61% |
-| 14 | `cgpa` | 0.038733 | 0.61% |
-| 15 | `mock_interview_score` | 0.037491 | 0.59% |
-| 16 | `lms_login_frequency` | 0.035983 | 0.56% |
-| 17 | `motivation_score` | 0.033636 | 0.53% |
-| 18 | `lab_performance_score` | 0.033247 | 0.52% |
-| 19 | `quiz_attempt_rate` | 0.033210 | 0.52% |
-| 20 | `ai_ml_score` | 0.031488 | 0.49% |
+| 1 | `backlog_count` | 3.671915 | 60.05% |
+| 2 | `stress_score` | 0.275805 | 4.51% |
+| 3 | `attendance_percentage` | 0.209621 | 3.43% |
+| 4 | `internal_marks_avg` | 0.192421 | 3.15% |
+| 5 | `assignment_submission_rate` | 0.152584 | 2.50% |
+| 6 | `course_completion_rate` | 0.143660 | 2.35% |
+| 7 | `financial_stress_score` | 0.136717 | 2.24% |
+| 8 | `time_management_score` | 0.093537 | 1.53% |
+| 9 | `mentor_feedback_score` | 0.070937 | 1.16% |
+| 10 | `video_watch_percentage` | 0.062251 | 1.02% |
+| 11 | `cgpa` | 0.054791 | 0.90% |
+| 12 | `semester_gpa` | 0.053669 | 0.88% |
+| 13 | `cybersecurity_score` | 0.047638 | 0.78% |
+| 14 | `mock_interview_score` | 0.047069 | 0.77% |
+| 15 | `aptitude_score` | 0.045010 | 0.74% |
+| 16 | `motivation_score` | 0.041022 | 0.67% |
+| 17 | `lab_performance_score` | 0.040644 | 0.66% |
+| 18 | `lms_login_frequency` | 0.036098 | 0.59% |
+| 19 | `leadership_score` | 0.033461 | 0.55% |
+| 20 | `consistency_score` | 0.032164 | 0.53% |
  
 ---
  
 ## 5. Most Important Features (Summary)
  
-1. **`backlog_count`** — mean |SHAP| = 2.6068
-2. **`recommended_intervention`** — mean |SHAP| = 1.6449
-3. **`attendance_percentage`** — mean |SHAP| = 0.2024
-4. **`internal_marks_avg`** — mean |SHAP| = 0.1888
-5. **`assignment_submission_rate`** — mean |SHAP| = 0.1546
+1. **`backlog_count`** — mean |SHAP| = 3.6719
+2. **`stress_score`** — mean |SHAP| = 0.2758
+3. **`attendance_percentage`** — mean |SHAP| = 0.2096
+4. **`internal_marks_avg`** — mean |SHAP| = 0.1924
+5. **`assignment_submission_rate`** — mean |SHAP| = 0.1526
  
 ---
  
@@ -186,4 +186,4 @@ Person B's `draft_intervention_plan` tool should receive the `top_factors` list 
  
 ---
  
-*End of report — 2026-06-28 18:25 UTC*
+*End of report — 2026-07-03 11:08 UTC*

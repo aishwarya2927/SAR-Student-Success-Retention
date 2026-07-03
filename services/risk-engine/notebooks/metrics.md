@@ -7,18 +7,18 @@
 
 | Metric | Score |
 | --- | --- |
-| Accuracy | 0.9583 |
-| Weighted F1 | 0.9598 |
-| Macro F1 | 0.8920 |
+| Accuracy | 0.9525 |
+| Weighted F1 | 0.9542 |
+| Macro F1 | 0.8804 |
 
 ## Per-Class
 
 | Class | Precision | Recall | F1 | Support |
 | --- | --- | --- | --- | --- |
-| Critical | 0.7105 | 0.8182 | 0.7606 | 33 |
-| High | 0.9790 | 0.9675 | 0.9732 | 338 |
-| Low | 0.9909 | 0.9613 | 0.9759 | 4878 |
-| Medium | 0.7891 | 0.9414 | 0.8585 | 751 |
+| Critical | 0.7500 | 0.8182 | 0.7826 | 33 |
+| High | 0.9164 | 0.9408 | 0.9285 | 338 |
+| Low | 0.9907 | 0.9606 | 0.9754 | 4878 |
+| Medium | 0.7711 | 0.9108 | 0.8352 | 751 |
 
 ## Why Recall Matters More Than Accuracy
 
@@ -31,8 +31,8 @@ classes — missing an at-risk student is far costlier than a false alarm.
 
 | Model | Accuracy | Weighted F1 | Macro F1 |
 | --- | --- | --- | --- |
-| Logistic Regression | 0.9465 | 0.9498 | 0.8275 |
-| XGBoost (v2)        | 0.9583 | 0.9598 | 0.8920 |
+| Logistic Regression | 0.9402 | 0.9439 | 0.8139 |
+| XGBoost (v2)        | 0.9525 | 0.9542 | 0.8804 |
 
 ## Why XGBoost + Balanced Weights
 
