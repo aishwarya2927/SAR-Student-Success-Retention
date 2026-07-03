@@ -91,6 +91,7 @@ class PredictionResponse(BaseModel):
     student_id: Optional[str]
     risk_band: str              # Critical | High | Medium | Low
     risk_score: float            # confidence * 100
+    confidence_score:     float
     confidence: float            # raw probability
     fee_delay_days: Optional[float] = None
     top_factors: list[TopFactor] = []  # Added this field for dashboard & research use
