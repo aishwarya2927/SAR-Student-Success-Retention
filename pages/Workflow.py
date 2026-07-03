@@ -19,7 +19,7 @@ st.divider()
 
 # ── Flag a student ────────────────────────────────────────────────────────────
 st.subheader("Flag a Student")
-selected_id = st.selectbox("Select student to flag", df["student_id"].tolist())
+selected_id = st.selectbox("Select student to flag", sorted(df["student_id"].tolist()))
 
 if st.button("🚩 Flag Student", use_container_width=False):
     conn   = sqlite3.connect("dashboard.db")
