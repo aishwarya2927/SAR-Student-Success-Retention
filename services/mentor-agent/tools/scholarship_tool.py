@@ -1,3 +1,6 @@
+SCHOLARSHIP_THRESHOLD = 30
+
+
 def check_scholarship_eligibility(
     student_id: str,
     fee_delay_days: int
@@ -7,24 +10,17 @@ def check_scholarship_eligibility(
     based on fee payment delay.
     """
 
-    SCHOLARSHIP_THRESHOLD = 30
+    fee_delay_days = fee_delay_days or 0
 
-    if fee_delay_days >= SCHOLARSHIP_THRESHOLD:
-
-        return {
-            "student_id": student_id,
-            "eligible": True,
-            "fee_delay_days": fee_delay_days,
-            "message": (
-                "Student may qualify for financial assistance."
-            )
-        }
+    eligible = fee_delay_days >= SCHOLARSHIP_THRESHOLD
 
     return {
         "student_id": student_id,
-        "eligible": False,
+        "eligible": eligible,
         "fee_delay_days": fee_delay_days,
         "message": (
-            "Fee delay is below scholarship review threshold."
+            "Student may qualify for financial assistance."
+            if eligible
+            else "Fee delay is below scholarship review threshold."
         )
     }

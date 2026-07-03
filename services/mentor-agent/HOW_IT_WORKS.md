@@ -1,6 +1,6 @@
 # Mentor Agent API
 
-The Mentor Agent is responsible for generating personalized intervention plans for at-risk students. It integrates with the Risk Engine API, invokes supporting tools when required, and uses Gemini to generate structured intervention recommendations.
+The Mentor Agent is responsible for generating personalized intervention plans for at-risk students. It integrates with the Risk Engine API, invokes supporting tools, retrieves relevant university resources, and uses Gemini to generate structured intervention recommendations for human review.
 
 ---
 
@@ -13,6 +13,7 @@ SAR-Student-Success-Retention/
 │   │   ├── app.py
 │   │   ├── orchestrator.py
 │   │   ├── requirements.txt
+│   │   ├── HOW_IT_WORKS.md
 │   │   ├── llm/
 │   │   │   └── gemini_client.py
 │   │   ├── tools/
@@ -34,13 +35,13 @@ SAR-Student-Success-Retention/
 
 # Step 1 — Install Dependencies
 
-Navigate to the Mentor Agent directory:
+Navigate to the Mentor Agent directory.
 
 ```bash
 cd services/mentor-agent
 ```
 
-Install the required packages:
+Install dependencies.
 
 ```bash
 pip install -r requirements.txt
@@ -50,21 +51,14 @@ pip install -r requirements.txt
 
 # Step 2 — Start the Risk Engine API
 
-The Mentor Agent depends on the Risk Engine developed by Person A.
-
-Navigate to:
+The Mentor Agent depends on the Risk Engine API.
 
 ```bash
 cd services/risk-engine/api
-```
-
-Run:
-
-```bash
 uvicorn main:app --reload --port 8000
 ```
 
-Verify the API is running by opening:
+Verify:
 
 ```
 http://127.0.0.1:8000/docs
@@ -76,36 +70,27 @@ http://127.0.0.1:8000/docs
 
 Open a new terminal.
 
-Navigate to:
-
 ```bash
 cd services/mentor-agent
-```
-
-Run:
-
-```bash
 uvicorn app:app --reload --port 8001
 ```
 
 Expected output:
 
 ```text
-INFO:     Uvicorn running on http://127.0.0.1:8001
-INFO:     Application startup complete.
+INFO: Uvicorn running on http://127.0.0.1:8001
+INFO: Application startup complete.
 ```
 
 ---
 
 # Step 4 — Open Swagger UI
 
-Open the following URL in your browser:
+Open:
 
 ```
 http://127.0.0.1:8001/docs
 ```
-
-Swagger UI allows interactive testing of the Mentor Agent endpoints.
 
 ---
 
@@ -117,7 +102,7 @@ Select:
 POST /generate-intervention
 ```
 
-Click **Try it out** and use the following request body:
+Example request:
 
 ```json
 {
@@ -125,13 +110,13 @@ Click **Try it out** and use the following request body:
 }
 ```
 
-Expected response:
+Example response:
 
 ```json
 {
   "student_id": "STU202600033",
   "risk_band": "High",
-  "risk_score": 99.97,
+  "prediction_confidence": 99.88,
   "student_summary": "...",
   "recommended_actions": [
     "...",
@@ -141,6 +126,8 @@ Expected response:
   "follow_up_plan": "...",
   "tools_called": [
     "get_risk_profile",
+    "check_scholarship_eligibility",
+    "search_support_resources",
     "draft_intervention_plan"
   ],
   "status": "pending_approval"
@@ -153,8 +140,6 @@ Expected response:
 
 ## Invalid Student ID
 
-Request:
-
 ```json
 {
   "student_id": "INVALID001"
@@ -163,14 +148,16 @@ Request:
 
 Expected:
 
-- Appropriate HTTP error response.
-- Mentor Agent should not crash.
+- HTTP error response.
+- Mentor Agent remains stable.
 
 ---
 
 ## Risk Engine Unavailable
 
-Stop the Risk Engine API and call:
+Stop the Risk Engine API.
+
+Call:
 
 ```
 POST /generate-intervention
@@ -179,7 +166,7 @@ POST /generate-intervention
 Expected:
 
 - HTTP 500 response.
-- Clear error message indicating that the Risk Engine is unavailable.
+- Clear error indicating that the Risk Engine is unavailable.
 
 ---
 
@@ -189,7 +176,7 @@ Expected:
 |---------|----------|-------------|
 | GET | `/` | Service information |
 | GET | `/health` | Health check |
-| POST | `/generate-intervention` | Generate an AI-based intervention plan |
+| POST | `/generate-intervention` | Generate AI intervention plan |
 | GET | `/docs` | Swagger UI |
 | GET | `/redoc` | ReDoc UI |
 
@@ -201,19 +188,26 @@ Expected:
 Student ID
      │
      ▼
-Mentor Agent API
-     │
-     ▼
 Risk Engine API
      │
      ▼
 Risk Profile
+(top_factors + fee_delay_days)
      │
      ▼
-Gemini Intervention Planner
+Mentor Agent Orchestrator
      │
-     ▼
+     ├──────────────► Scholarship Eligibility Tool
+     │
+     ├──────────────► University Resource Retrieval (RAG)
+     │
+     └──────────────► Gemini Intervention Planner
+                       │
+                       ▼
 Structured Intervention Report
+                       │
+                       ▼
+Pending Human Approval
 ```
 
 ---
@@ -222,23 +216,14 @@ Structured Intervention Report
 
 - Mentor Agent Orchestrator
 - Risk Engine API Integration
+- Scholarship Eligibility Tool
+- RAG-based University Support Resource Retrieval (ChromaDB + HuggingFace)
 - Gemini-based Intervention Planning
 - Structured JSON Intervention Reports
 - Human Approval Workflow (`pending_approval`)
 - Tool Execution Tracking (`tools_called`)
-- FastAPI-based REST API
+- FastAPI REST API
 - Swagger Documentation
-
----
-
-# Planned Integration
-
-The following components have already been implemented and will be automatically enabled once the Risk Engine exposes the required fields (`top_factors` and `fee_delay_days`):
-
-- Scholarship Eligibility Tool
-- RAG-based University Support Resource Retrieval (ChromaDB + HuggingFace)
-
-No changes to the Mentor Agent API will be required.
 
 ---
 
@@ -264,7 +249,7 @@ POST http://localhost:8001/generate-intervention
 {
   "student_id": "STU202600033",
   "risk_band": "High",
-  "risk_score": 99.97,
+  "prediction_confidence": 99.88,
   "student_summary": "...",
   "recommended_actions": [
     "...",
@@ -274,6 +259,8 @@ POST http://localhost:8001/generate-intervention
   "follow_up_plan": "...",
   "tools_called": [
     "get_risk_profile",
+    "check_scholarship_eligibility",
+    "search_support_resources",
     "draft_intervention_plan"
   ],
   "status": "pending_approval"
@@ -288,38 +275,45 @@ POST http://localhost:8001/generate-intervention
 |----------------|--------------|
 | `student_id` | Student Details |
 | `risk_band` | Risk Badge |
-| `risk_score` | Prediction Confidence |
+| `prediction_confidence` | Confidence Indicator |
 | `student_summary` | Summary Card |
-| `recommended_actions` | Recommended Actions List |
+| `recommended_actions` | Recommendations |
 | `priority_level` | Priority Badge |
 | `follow_up_plan` | Follow-up Section |
 | `status` | Approval Status |
-| `tools_called` | Debug / Audit Information |
+| `tools_called` | Audit / Debug Panel |
 
 ---
 
 # System Architecture
 
 ```text
-                 React Dashboard
-                        │
-                        ▼
-              Mentor Agent API (Person B)
-                        │
-        ┌───────────────┴───────────────┐
-        ▼                               ▼
- Risk Engine API                 Gemini LLM
-   (Person A)                         │
-        │                             │
-        └───────────────┬─────────────┘
-                        ▼
-          Structured Intervention Report
+                  React Dashboard
+                         │
+                         ▼
+               Mentor Agent API
+                         │
+        ┌────────────────┼────────────────┐
+        ▼                ▼                ▼
+  Risk Engine      Scholarship Tool     RAG Retrieval
+                         │                │
+                         └──────┬─────────┘
+                                ▼
+                       Gemini Intervention Planner
+                                │
+                                ▼
+                Structured Intervention Report
+                                │
+                                ▼
+                     Pending Human Approval
 ```
 
 ---
 
 # Notes
 
-- The Mentor Agent currently consumes the Risk Engine API to obtain student risk predictions.
-- Scholarship eligibility and RAG retrieval are already implemented and will be enabled automatically once the Risk Engine returns `top_factors` and `fee_delay_days`.
-- All intervention recommendations require human approval before any action is taken.
+- The Mentor Agent consumes the Risk Engine API to obtain student risk predictions and explainability information (`top_factors`).
+- Scholarship eligibility is evaluated using `fee_delay_days` returned by the Risk Engine.
+- Relevant university support resources are retrieved using ChromaDB and HuggingFace embeddings before intervention generation.
+- Gemini generates structured intervention recommendations based on the student's risk profile and retrieved contextual information.
+- Every generated recommendation is marked as `pending_approval` to support a human-in-the-loop review workflow before any intervention is acted upon.

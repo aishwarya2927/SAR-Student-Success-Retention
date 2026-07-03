@@ -28,7 +28,7 @@ def run_agent(student_id: str) -> dict:
         return {
             "student_id": risk_profile["student_id"],
             "risk_band": risk_profile["risk_band"],
-            "risk_score": risk_profile["risk_score"],
+            "prediction_confidence": risk_profile["risk_score"],
             "student_summary": "Student is currently classified as low risk. No intervention is required.",
             "recommended_actions": [],
             "priority_level": "Low",
@@ -46,10 +46,7 @@ def run_agent(student_id: str) -> dict:
     ]
 
     # Scholarship Tool
-    if (
-        "fee_delay" in factors
-        and "fee_delay_days" in risk_profile
-    ):
+    if "fee_delay_days" in risk_profile:
 
         gathered_info["scholarship"] = (
             check_scholarship_eligibility(

@@ -18,9 +18,23 @@ db = Chroma(
 
 
 RISK_FACTOR_QUERIES = {
-    "backlog_count": "support for students with academic backlogs",
-    "gpa_trend": "study skills and tutoring for low GPA",
-    "attendance_drop": "attendance counselling and mentoring"
+    "semester":
+        "career counselling and placement guidance",
+
+    "internal_marks_avg":
+        "academic mentoring and study improvement",
+
+    "hackathon_count":
+        "hackathons, internships and career development",
+
+    "backlog_count":
+        "support for students with academic backlogs",
+
+    "attendance_drop":
+        "attendance counselling and mentoring",
+
+    "gpa_trend":
+        "study skills and tutoring"
 }
 
 
