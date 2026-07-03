@@ -12,14 +12,15 @@ st.divider()
 # ── Student selectors ─────────────────────────────────────────────────────────
 col1, col2 = st.columns(2)
 with col1:
-    student_a_id = st.selectbox("Student A", df["student_id"].tolist(), key="student_a")
+    student_a_id = st.selectbox("Student A", sorted(df["student_id"].tolist()), key="student_a")
 with col2:
     other_ids  = [s for s in df["student_id"].tolist() if s != student_a_id]
     default_b  = other_ids[0] if other_ids else student_a_id
+    sorted_ids = sorted(df["student_id"].tolist())
     student_b_id = st.selectbox(
         "Student B",
-        df["student_id"].tolist(),
-        index=df["student_id"].tolist().index(default_b),
+        sorted_ids,
+        index=sorted_ids.index(default_b),
         key="student_b"
     )
 
