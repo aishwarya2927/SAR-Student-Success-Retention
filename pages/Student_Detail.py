@@ -9,7 +9,7 @@ st.caption("Select a student to see their full risk profile")
 df = load_students()
 
 # ── Student selector ──────────────────────────────────────────────────────────
-selected_id = st.selectbox("Select student", df["student_id"].tolist())
+selected_id = st.selectbox("Select student", sorted(df["student_id"].tolist()))
 student = df[df["student_id"] == selected_id].iloc[0]
 
 st.divider()
