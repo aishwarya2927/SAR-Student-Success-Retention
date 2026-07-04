@@ -219,8 +219,13 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+<<<<<<< HEAD
 # Hugging Face model cache
 services/mentor-agent/model_cache/
 
 # Chroma Vector Database
 services/mentor-agent/vector_store/chroma_db/
+=======
+dashboard.db
+student_success_dataset_30000.csv
+>>>>>>> 2f6f9ea645a221021d25fdcab7a8882f5f349e4a
