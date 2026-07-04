@@ -33,8 +33,8 @@ else:
     student_a = df[df["student_id"] == student_a_id].iloc[0]
     student_b = df[df["student_id"] == student_b_id].iloc[0]
 
-    compare_metrics = ["cgpa", "attendance_percentage", "backlog_count", "fee_delay_days", "risk_score"]
-    metric_labels   = ["CGPA", "Attendance %", "Backlogs", "Fee Delay (days)", "Risk Score"]
+    compare_metrics = ["cgpa", "attendance_percentage", "backlog_count", "fee_delay_days", "prediction_confidence"]
+    metric_labels   = ["CGPA", "Attendance %", "Backlogs", "Fee Delay (days)", "Prediction Confidence"]
 
     fig = go.Figure()
     fig.add_trace(go.Bar(

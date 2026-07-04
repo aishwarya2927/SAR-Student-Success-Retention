@@ -17,7 +17,7 @@ ESCALATION_CONTACTS = ["Counselor - Dr. Nair", "Academic Dean", "Financial Aid O
 def load_students():
     """Load the students table from the DB, with display columns added."""
     conn = sqlite3.connect("dashboard.db")
-    df = pd.read_sql("SELECT * FROM students ORDER BY risk_score DESC", conn)
+    df = pd.read_sql("SELECT * FROM students ORDER BY prediction_confidence DESC", conn)
     conn.close()
 
     df["risk_band"] = df["risk_band"].str.lower().str.strip()

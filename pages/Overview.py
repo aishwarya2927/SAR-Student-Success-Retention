@@ -35,8 +35,8 @@ st.dataframe(
     df[[
         "student_id", "department", "year_label", "cgpa",
         "attendance_percentage", "backlog_count", "fee_delay_days",
-        "risk_score", "Risk", "recommended_intervention"
-    ]].rename(columns={"risk_score": "confidence", "year_label": "year"}),
+        "prediction_confidence", "Risk", "recommended_intervention"
+    ]].rename(columns={"prediction_confidence": "confidence", "year_label": "year"}),
     use_container_width=True,
     hide_index=True
 )
