@@ -1,7 +1,10 @@
 import json
+import time
+import logging
 
 from llm.gemini_client import generate_text
 
+logger = logging.getLogger(__name__)
 
 def draft_intervention_plan(
     risk_profile: dict,
@@ -105,20 +108,41 @@ Requirements:
 - Do not invent student information.
 """
 
-    try:
+    MAX_RETRIES = 3
+    RETRY_DELAY = 2  # seconds
 
-        recommendation = generate_text(prompt)
+    for attempt in range(MAX_RETRIES):
 
-        return json.loads(recommendation)
+        try:
 
-    except json.JSONDecodeError:
+            recommendation = generate_text(prompt)
 
-        return {
-            "error": "Gemini returned an invalid JSON response."
-        }
+            return json.loads(recommendation)
 
-    except Exception as e:
+        except json.JSONDecodeError:
 
-        return {
-            "error": f"Unable to generate intervention plan: {str(e)}"
-        }
+            return {
+                "error": "Gemini returned an invalid JSON response.",
+                "raw_response": recommendation
+            }
+        except Exception as e:
+
+            # Retry only if attempts remain
+            if attempt < MAX_RETRIES - 1:
+
+                logger.warning(
+                    f"Gemini request failed "
+                    f"(Attempt {attempt + 1}/{MAX_RETRIES}). "
+                    f"Retrying in {RETRY_DELAY} seconds..."
+                )
+
+                time.sleep(RETRY_DELAY)
+
+            else:
+
+                return {
+                    "error": (
+                        "Unable to generate intervention plan "
+                        f"after {MAX_RETRIES} attempts: {str(e)}"
+                    )
+                }

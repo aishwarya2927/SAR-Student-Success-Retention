@@ -1,8 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-from orchestrator import run_agent
+from graph import graph
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="Mentor Agent API",
@@ -41,12 +44,23 @@ def health():
 @app.post("/generate-intervention")
 def generate_intervention(data: StudentRequest):
     """
-    Generates a personalized intervention plan for a student.
+    Generates a personalized intervention plan using the LangGraph workflow.
     """
 
     try:
 
-        return run_agent(data.student_id)
+        state = {
+            "student_id": data.student_id,
+            "risk_profile": {},
+            "gathered_info": {},
+            "tools_called": [],
+            "status": "",
+            "response": {}
+        }
+
+        result = graph.invoke(state)
+
+        return result["response"]
 
     except HTTPException:
         raise
