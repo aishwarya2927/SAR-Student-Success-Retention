@@ -104,7 +104,8 @@ Requirements:
 - Do not wrap the JSON in ``` blocks.
 - Do not include explanations before or after the JSON.
 - Recommend only actions supported by the provided information.
-- Mention relevant university resources where applicable.
+- Use the retrieved university resources naturally while generating recommendations.
+- Do not mention document names, resource numbers, retrieval results, or internal references in the final response.
 - Do not invent student information.
 """
 
