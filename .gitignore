@@ -2,6 +2,7 @@
 __pycache__/
 *.py[codz]
 *$py.class
+*.pyc
 
 # C extensions
 *.so
@@ -151,6 +152,7 @@ activemq-data/
 .env
 .envrc
 .venv
+.venv312/
 env/
 venv/
 ENV/
@@ -216,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Hugging Face model cache
+services/mentor-agent/model_cache/
+
+# Chroma Vector Database
+services/mentor-agent/vector_store/chroma_db/
