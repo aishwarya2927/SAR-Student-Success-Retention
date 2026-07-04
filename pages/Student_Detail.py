@@ -120,9 +120,8 @@ if "intervention_plan" in st.session_state:
     st.info(plan.get("student_summary", "—"))
 
     # ── Risk + priority badges ────────────────────────────────────────────────
-    b1, b2, b3 = st.columns(3)
+    b1, b2, b3 = st.columns(2)
     b1.metric("Risk Band",      plan.get("risk_band",      "—"))
-    b2.metric("Risk Score",     plan.get("risk_score",     "—"))
     b3.metric("Priority Level", plan.get("priority_level", "—"))
 
     st.divider()

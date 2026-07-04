@@ -1,7 +1,16 @@
-import sqlite3
+import os
+import time
 import json
 import pandas as pd
+import psycopg2
 import requests
+from sqlalchemy import create_engine
+from dotenv import load_dotenv
+from sqlalchemy import text
+
+load_dotenv()  # reads DATABASE_URL from .env when running locally
+
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 
 # ── Fallback helpers (used only when Person A's API call fails) ────────────
@@ -19,13 +28,12 @@ def band_to_simple(band):
 
 # ── Calls Person A's real risk model ────────────────────────────────────────
 def get_real_risk(row):
+    time.sleep(0.5)
     try:
-        student_dict = row.to_dict()
-        student_dict["current_year"] = str(student_dict["current_year"])
-        response = requests.post(
-            "http://localhost:8000/predict",
-            json=student_dict,
-            timeout=5
+        student_id = row["student_id"]
+        response = requests.get(
+            f"https://sar-student-success-retention.onrender.com/predict/{student_id}",
+            timeout=15
         )
         response.raise_for_status()
         result = response.json()
@@ -34,8 +42,7 @@ def get_real_risk(row):
             raise ValueError(f"API response missing expected keys: {result}")
 
         top_factors = result.get("top_factors", [])
-
-        return result["risk_score"], result["risk_band"].lower(), "api", str(top_factors)
+        return result["risk_score"], result["risk_band"].lower(), "api", json.dumps(top_factors)
 
     except Exception as e:
         print(f"  [WARN] API call failed for {row['student_id']}: {e}")
@@ -43,70 +50,79 @@ def get_real_risk(row):
 
 
 # ── Intervention approval workflow functions ────────────────────────────────
+# Each function opens its own short-lived connection.
 
 def insert_intervention(student_id, plan):
-    c = sqlite3.connect("dashboard.db")
-    c.execute("""
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("""
         INSERT INTO intervention_reports
         (student_id, risk_band, prediction_confidence, student_summary,
          recommended_actions, priority_level, follow_up_plan, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending_approval')
+        VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending_approval')
+        RETURNING intervention_id
     """, (
         student_id,
         plan.get("risk_band"),
         plan.get("prediction_confidence"),
         plan.get("student_summary"),
-        json.dumps(plan.get("recommended_actions", [])),  # ← json.dumps not str()
+        json.dumps(plan.get("recommended_actions", [])),
         plan.get("priority_level"),
         plan.get("follow_up_plan"),
     ))
-    c.commit()
-    new_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
-    c.close()
+    new_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
     return new_id
 
 
 def approve_intervention(intervention_id, faculty_name):
-    c = sqlite3.connect("dashboard.db")
-    c.execute("""
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("""
         UPDATE intervention_reports
-        SET status='approved', approved_by=?, approved_at=CURRENT_TIMESTAMP
-        WHERE intervention_id=?
+        SET status='approved', approved_by=%s, approved_at=CURRENT_TIMESTAMP
+        WHERE intervention_id=%s
     """, (faculty_name, intervention_id))
-    c.commit()
-    c.close()
+    conn.commit()
+    cur.close()
+    conn.close()
 
 
 def reject_intervention(intervention_id):
-    c = sqlite3.connect("dashboard.db")
-    c.execute("""
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("""
         UPDATE intervention_reports
         SET status='rejected'
-        WHERE intervention_id=?
+        WHERE intervention_id=%s
     """, (intervention_id,))
-    c.commit()
-    c.close()
+    conn.commit()
+    cur.close()
+    conn.close()
 
 
 def get_latest_approved(student_id):
-    c = sqlite3.connect("dashboard.db")
-    row = c.execute("""
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("""
         SELECT * FROM intervention_reports
-        WHERE student_id=? AND status='approved'
+        WHERE student_id=%s AND status='approved'
         ORDER BY approved_at DESC LIMIT 1
-    """, (student_id,)).fetchone()
-    c.close()
+    """, (student_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
     return row
 
 
 # ── One-time setup ─────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    conn = sqlite3.connect("dashboard.db")
-    cursor = conn.cursor()
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
 
-    cursor.execute("PRAGMA foreign_keys = ON")
-
-    cursor.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS students(
         student_id TEXT PRIMARY KEY,
         department TEXT,
@@ -124,17 +140,18 @@ if __name__ == "__main__":
     )
     """)
 
-    cursor.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS risk_history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         student_id TEXT,
         prediction_confidence REAL,
         risk_band TEXT,
         timestamp TEXT,
-        FOREIGN KEY (student_id) REFERENCES students(student_id))
+        FOREIGN KEY (student_id) REFERENCES students(student_id)
+    )
     """)
 
-    cursor.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS mentoring_workflow (
         student_id TEXT PRIMARY KEY,
         status TEXT CHECK(status IN ('flagged','assigned','scheduled','resolved','escalated')),
@@ -146,9 +163,9 @@ if __name__ == "__main__":
     )
     """)
 
-    cursor.execute("""
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS intervention_reports (
-        intervention_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        intervention_id SERIAL PRIMARY KEY,
         student_id TEXT NOT NULL,
         risk_band TEXT,
         prediction_confidence REAL,
@@ -158,20 +175,22 @@ if __name__ == "__main__":
         follow_up_plan TEXT,
         status TEXT DEFAULT 'pending_approval',
         approved_by TEXT,
-        approved_at DATETIME,
-        generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        approved_at TIMESTAMP,
+        generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (student_id) REFERENCES students(student_id)
     )
     """)
 
     conn.commit()
+    cur.close()
+    conn.close()
 
     df = pd.read_csv("datasets/student_success_dataset_30000.csv")
     df = df.head(200)
 
     print("Getting real risk scores from Person A's API...")
     df[["prediction_confidence", "risk_band", "score_source", "top_factors"]] = df.apply(
-    lambda row: pd.Series(get_real_risk(row)), axis=1
+        lambda row: pd.Series(get_real_risk(row)), axis=1
     )
 
     n_api      = (df["score_source"] == "api").sum()
@@ -184,9 +203,13 @@ if __name__ == "__main__":
         "student_id", "department", "current_year", "cgpa",
         "attendance_percentage", "backlog_count", "fee_delay_days",
         "academic_risk_band", "recommended_intervention",
-        "prediction_confidence", "risk_band", "score_source","top_factors"
+        "prediction_confidence", "risk_band", "score_source", "top_factors"
     ]]
 
-    df_students.to_sql("students", conn, if_exists="replace", index=False)
+    # pandas.to_sql needs a SQLAlchemy engine for Postgres, not a raw psycopg2 connection
+    engine = create_engine(DATABASE_URL)
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM students"))
+    df_students.to_sql("students", engine, if_exists="append", index=False)
+
     print(f"Loaded {len(df_students)} students successfully")
-    conn.close()

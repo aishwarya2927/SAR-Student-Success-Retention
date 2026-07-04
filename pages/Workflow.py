@@ -1,6 +1,11 @@
-import sqlite3
+import os
+import psycopg2
 import streamlit as st
+from dotenv import load_dotenv
 from utils import load_students, load_workflow, append_history, MENTOR_LIST, ESCALATION_CONTACTS
+
+load_dotenv()
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 st.title("🗂️ Mentoring Workflow Tracker")
 st.caption("Flag at-risk students, assign mentors and track case progress")
@@ -22,10 +27,10 @@ st.subheader("Flag a Student")
 selected_id = st.selectbox("Select student to flag", sorted(df["student_id"].tolist()))
 
 if st.button("🚩 Flag Student", use_container_width=False):
-    conn   = sqlite3.connect("dashboard.db")
+    conn   = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT OR IGNORE INTO mentoring_workflow (student_id, status) VALUES (?, ?)",
+        "INSERT INTO mentoring_workflow (student_id, status) VALUES (%s, %s) ON CONFLICT (student_id) DO NOTHING",
         (selected_id, "flagged")
     )
     conn.commit()
@@ -90,10 +95,10 @@ else:
         st.write("**Next step: Assign a mentor**")
         chosen_mentor = st.selectbox("Mentor", MENTOR_LIST, key="mentor_pick")
         if st.button("Assign Mentor", use_container_width=True):
-            conn   = sqlite3.connect("dashboard.db")
+            conn   = psycopg2.connect(DATABASE_URL)
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE mentoring_workflow SET status='assigned', assigned_mentor=?, history=? WHERE student_id=?",
+                "UPDATE mentoring_workflow SET status='assigned', assigned_mentor=%s, history=%s WHERE student_id=%s",
                 (chosen_mentor, append_history(current_row["history"], f"Assigned to {chosen_mentor}"), update_id)
             )
             conn.commit(); conn.close()
@@ -104,10 +109,10 @@ else:
         st.write("**Next step: Schedule a meeting**")
         meeting_date = st.date_input("Meeting date", key="meeting_date_pick")
         if st.button("Schedule Meeting", use_container_width=True):
-            conn   = sqlite3.connect("dashboard.db")
+            conn   = psycopg2.connect(DATABASE_URL)
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE mentoring_workflow SET status='scheduled', meeting_date=?, history=? WHERE student_id=?",
+                "UPDATE mentoring_workflow SET status='scheduled', meeting_date=%s, history=%s WHERE student_id=%s",
                 (str(meeting_date), append_history(current_row["history"], f"Meeting scheduled for {meeting_date}"), update_id)
             )
             conn.commit(); conn.close()
@@ -121,10 +126,10 @@ else:
         resolve_col, escalate_col = st.columns(2)
         with resolve_col:
             if st.button("✅ Mark Resolved", use_container_width=True):
-                conn   = sqlite3.connect("dashboard.db")
+                conn   = psycopg2.connect(DATABASE_URL)
                 cursor = conn.cursor()
                 cursor.execute(
-                    "UPDATE mentoring_workflow SET status='resolved', outcome_notes=?, history=? WHERE student_id=?",
+                    "UPDATE mentoring_workflow SET status='resolved', outcome_notes=%s, history=%s WHERE student_id=%s",
                     (outcome, append_history(current_row["history"], f"Resolved: {outcome}"), update_id)
                 )
                 conn.commit(); conn.close()
@@ -135,10 +140,10 @@ else:
             st.caption("Escalating reassigns the case to:")
             escalate_to = st.selectbox("Escalation contact", ESCALATION_CONTACTS, key="escalate_contact_pick")
             if st.button("⚠️ Escalate", use_container_width=True):
-                conn   = sqlite3.connect("dashboard.db")
+                conn   = psycopg2.connect(DATABASE_URL)
                 cursor = conn.cursor()
                 cursor.execute(
-                    "UPDATE mentoring_workflow SET status='escalated', assigned_mentor=?, outcome_notes=?, history=? WHERE student_id=?",
+                    "UPDATE mentoring_workflow SET status='escalated', assigned_mentor=%s, outcome_notes=%s, history=%s WHERE student_id=%s",
                     (escalate_to, outcome, append_history(current_row["history"], f"Escalated to {escalate_to}: {outcome}"), update_id)
                 )
                 conn.commit(); conn.close()
@@ -154,10 +159,10 @@ else:
         outcome = st.text_area("Update outcome notes", key="escalate_followup_notes", height=80,
                                value=current_row.get("outcome_notes", "") or "")
         if st.button("✅ Mark Resolved", key="resolve_after_escalate_btn", use_container_width=True):
-            conn   = sqlite3.connect("dashboard.db")
+            conn   = psycopg2.connect(DATABASE_URL)
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE mentoring_workflow SET status='resolved', outcome_notes=?, history=? WHERE student_id=?",
+                "UPDATE mentoring_workflow SET status='resolved', outcome_notes=%s, history=%s WHERE student_id=%s",
                 (outcome, append_history(current_row["history"], f"Resolved after escalation: {outcome}"), update_id)
             )
             conn.commit(); conn.close()

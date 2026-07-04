@@ -1,5 +1,11 @@
-import sqlite3
+import os
 import pandas as pd
+from sqlalchemy import create_engine
+from dotenv import load_dotenv
+
+load_dotenv()
+DATABASE_URL = os.environ["DATABASE_URL"]
+engine = create_engine(DATABASE_URL)
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -16,9 +22,7 @@ ESCALATION_CONTACTS = ["Counselor - Dr. Nair", "Academic Dean", "Financial Aid O
 
 def load_students():
     """Load the students table from the DB, with display columns added."""
-    conn = sqlite3.connect("dashboard.db")
-    df = pd.read_sql("SELECT * FROM students ORDER BY prediction_confidence DESC", conn)
-    conn.close()
+    df = pd.read_sql("SELECT * FROM students ORDER BY prediction_confidence DESC", engine)
 
     df["risk_band"] = df["risk_band"].str.lower().str.strip()
     df["year_label"] = df["current_year"].map(YEAR_LABELS).fillna(df["current_year"].astype(str))
@@ -28,9 +32,7 @@ def load_students():
 
 def load_workflow():
     """Load the mentoring workflow table from the DB."""
-    conn = sqlite3.connect("dashboard.db")
-    df = pd.read_sql("SELECT * FROM mentoring_workflow", conn)
-    conn.close()
+    df = pd.read_sql("SELECT * FROM mentoring_workflow", engine)
     return df
 
 

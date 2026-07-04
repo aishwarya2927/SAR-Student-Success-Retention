@@ -1,7 +1,12 @@
+import os
 import json
-import sqlite3
+import psycopg2
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+
+load_dotenv()
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 app = FastAPI(
     title="Student Dashboard API",
@@ -9,11 +14,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-DB_PATH = "dashboard.db"
-
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DATABASE_URL)
     return conn
 
 
@@ -34,7 +37,8 @@ def get_approved_intervention(student_id: str):
     - Returns 404 if no approved plan exists (pending/rejected don't count).
     """
     conn = get_db()
-    row = conn.execute("""
+    cur = conn.cursor()
+    cur.execute("""
         SELECT
             intervention_id,
             student_id,
@@ -49,10 +53,12 @@ def get_approved_intervention(student_id: str):
             approved_at,
             generated_at
         FROM intervention_reports
-        WHERE student_id = ? AND status = 'approved'
+        WHERE student_id = %s AND status = 'approved'
         ORDER BY approved_at DESC
         LIMIT 1
-    """, (student_id,)).fetchone()
+    """, (student_id,))
+    row = cur.fetchone()
+    cur.close()
     conn.close()
 
     if row is None:
@@ -72,6 +78,6 @@ def get_approved_intervention(student_id: str):
         "follow_up_plan":        row[7],
         "status":                row[8],
         "approved_by":           row[9],
-        "approved_at":           row[10],
-        "generated_at":          row[11],
+        "approved_at":           str(row[10]) if row[10] else None,
+        "generated_at":          str(row[11]) if row[11] else None,
     })
