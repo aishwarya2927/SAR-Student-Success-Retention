@@ -5,6 +5,7 @@ from prompts.roadmap_prompt import (
     ROADMAP_OUTPUT_FORMAT,
 )
 from utils.response_validator import validate_roadmap_response
+import json
 
 
 def generate_improvement_roadmap(student_id: str):
@@ -88,6 +89,11 @@ Follow this schema exactly.
 
     # Call Gemini
     roadmap_json = ask_gemini(prompt)
+
+    # DEBUG: Print Gemini response
+    print("\n========== GEMINI ROADMAP RESPONSE ==========")
+    print(json.dumps(roadmap_json, indent=2))
+    print("=============================================\n")
 
     # Validate JSON
     validation = validate_roadmap_response(roadmap_json)
