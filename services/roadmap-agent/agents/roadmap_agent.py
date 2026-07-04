@@ -3,8 +3,7 @@ import os
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from utils.json_parser import parse_llm_json
-
+from json_parser import parse_llm_json
 load_dotenv(".env")
 
 

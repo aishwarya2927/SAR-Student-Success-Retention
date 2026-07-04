@@ -1,5 +1,48 @@
+import requests
+def get_faculty_intervention(student_id):
+    try:
+        response = requests.get(
+            f"http://127.0.0.1:8002/intervention/{student_id}",
+            timeout=5
+        )
+
+        if response.status_code == 200:
+            return response.json()
+
+        return None
+
+    except Exception:
+        return None
+def show_faculty_intervention(student_id):
+    intervention = get_faculty_intervention(student_id)
+
+    st.subheader("🧑‍🏫 Faculty Approved Intervention Plan")
+
+    if not intervention:
+        st.info("No approved intervention plan available yet.")
+        return
+
+    st.markdown(
+        f"""
+        <div class="career-card">
+            <h3>✅ Approved Intervention</h3>
+            <p><b>Status:</b> {intervention.get("status", "N/A")}</p>
+            <p><b>Approved By:</b> {intervention.get("approved_by", "N/A")}</p>
+            <p><b>Approved At:</b> {intervention.get("approved_at", "N/A")}</p>
+            <hr>
+            <p><b>Plan:</b></p>
+            <p>{intervention.get("plan", "No plan details available.")}</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 from calendar import week
 import json
+import sys
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+sys.path.append(str(BASE_DIR / "utils"))
 import re
 
 import pandas as pd
@@ -11,6 +54,56 @@ from agents.intent_router import classify_intent
 from modules.roadmap_generator import generate_improvement_roadmap
 from modules.career_module import generate_career_guidance
 
+def get_faculty_intervention(student_id):
+
+    try:
+        response = requests.get(
+            f"http://localhost:8000/intervention/{student_id}"
+        )
+
+        if response.status_code == 200:
+            return response.json()
+
+        return None
+
+    except Exception as e:
+        return None
+
+def show_faculty_intervention(student_id):
+
+    intervention = get_faculty_intervention(student_id)
+
+    st.subheader("🧑‍🏫 Faculty Approved Intervention Plan")
+
+    if not intervention:
+        st.info("No approved intervention available yet.")
+        return
+
+
+    st.markdown(
+        f"""
+        <div class="career-card">
+
+        <h3>✅ Approved Plan</h3>
+
+        <b>Status:</b> {intervention.get("status")} <br>
+
+        <b>Approved By:</b>
+        {intervention.get("approved_by")}
+
+        <br><br>
+
+        📋 <b>Intervention:</b>
+
+        <p>
+        {intervention.get("plan")}
+        </p>
+
+        </div>
+
+        """,
+        unsafe_allow_html=True
+    )
 
 st.set_page_config(
     page_title="Student Success AI",
@@ -981,6 +1074,7 @@ if st.button("🚀 Ask Agent", use_container_width=True):
             with st.spinner("Generating personalized roadmap..."):
                 roadmap_result = generate_improvement_roadmap(student_id)
                 show_roadmap_ui(roadmap_result)
+                show_faculty_intervention(student_id)
 
         elif intent == "RISK":
             with st.spinner("Analyzing risk factors..."):
@@ -995,3 +1089,4 @@ if st.button("🚀 Ask Agent", use_container_width=True):
 
         else:
             st.warning("I couldn't understand your question clearly.")
+            show_faculty_intervention(student_id)
