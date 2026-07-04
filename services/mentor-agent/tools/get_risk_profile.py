@@ -1,6 +1,6 @@
 import requests
 
-RISK_ENGINE_URL = "http://127.0.0.1:8000"
+RISK_ENGINE_URL = "https://sar-student-success-retention.onrender.com"
 
 
 def get_risk_profile(student_id: str) -> dict:
