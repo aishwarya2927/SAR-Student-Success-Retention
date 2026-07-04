@@ -1,3 +1,4 @@
+import ast
 import streamlit as st
 from utils import load_students, year_filter_options
 
@@ -5,6 +6,10 @@ st.title("🎓 Student Risk Dashboard")
 st.caption("Faculty overview — all students ranked by dropout risk")
 
 df = load_students()
+
+df["top_factor"] = df["top_factors"].apply(
+    lambda tf: ast.literal_eval(tf)[0]["feature"] if tf and tf != "[]" else "—"
+)
 
 # ── Top metrics ───────────────────────────────────────────────────────────────
 col1, col2, col3, col4 = st.columns(4)
@@ -35,7 +40,7 @@ st.dataframe(
     df[[
         "student_id", "department", "year_label", "cgpa",
         "attendance_percentage", "backlog_count", "fee_delay_days",
-        "prediction_confidence", "Risk", "recommended_intervention"
+        "prediction_confidence", "Risk","top_factor", "recommended_intervention"
     ]].rename(columns={"prediction_confidence": "confidence", "year_label": "year"}),
     use_container_width=True,
     hide_index=True

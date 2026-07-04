@@ -33,11 +33,13 @@ def get_real_risk(row):
         if "risk_score" not in result or "risk_band" not in result:
             raise ValueError(f"API response missing expected keys: {result}")
 
-        return result["risk_score"], result["risk_band"].lower(), "api"
+        top_factors = result.get("top_factors", [])
+
+        return result["risk_score"], result["risk_band"].lower(), "api", str(top_factors)
 
     except Exception as e:
         print(f"  [WARN] API call failed for {row['student_id']}: {e}")
-        return band_to_score(row["academic_risk_band"]), band_to_simple(row["academic_risk_band"]), "fallback"
+        return band_to_score(row["academic_risk_band"]), band_to_simple(row["academic_risk_band"]), "fallback", "[]"
 
 
 # ── Intervention approval workflow functions ────────────────────────────────
@@ -117,7 +119,8 @@ if __name__ == "__main__":
         recommended_intervention TEXT,
         prediction_confidence REAL,
         risk_band TEXT,
-        score_source TEXT
+        score_source TEXT,
+        top_factors TEXT
     )
     """)
 
@@ -167,8 +170,8 @@ if __name__ == "__main__":
     df = df.head(200)
 
     print("Getting real risk scores from Person A's API...")
-    df[["prediction_confidence", "risk_band", "score_source"]] = df.apply(
-        lambda row: pd.Series(get_real_risk(row)), axis=1
+    df[["prediction_confidence", "risk_band", "score_source", "top_factors"]] = df.apply(
+    lambda row: pd.Series(get_real_risk(row)), axis=1
     )
 
     n_api      = (df["score_source"] == "api").sum()
@@ -181,7 +184,7 @@ if __name__ == "__main__":
         "student_id", "department", "current_year", "cgpa",
         "attendance_percentage", "backlog_count", "fee_delay_days",
         "academic_risk_band", "recommended_intervention",
-        "prediction_confidence", "risk_band", "score_source"
+        "prediction_confidence", "risk_band", "score_source","top_factors"
     ]]
 
     df_students.to_sql("students", conn, if_exists="replace", index=False)

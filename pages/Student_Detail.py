@@ -1,3 +1,4 @@
+import ast
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -49,35 +50,27 @@ with info_col2:
 
 st.divider()
 
-# ── Risk factor chart ─────────────────────────────────────────────────────────
-st.subheader("Student metrics overview")
+# ── Top contributing factors (SHAP-based) ─────────────────────────────────────
+st.subheader("Top Contributing Factors")
+st.caption("Based on the model's SHAP analysis — shows what the model relied on most for this prediction, not a guaranteed cause")
 
-factors = pd.DataFrame({
-    "Factor": ["Attendance", "Backlogs", "Fee Delay", "CGPA"],
-    "Value": [
-        student["attendance_percentage"],
-        student["backlog_count"] * 10,
-        student["fee_delay_days"],
-        student["cgpa"] * 10,
-    ],
-    "Color": ["blue", "red", "orange", "green"],
-})
+top_factors_raw = student.get("top_factors", "[]")
+top_factors = ast.literal_eval(top_factors_raw) if isinstance(top_factors_raw, str) else top_factors_raw
 
-fig = px.bar(
-    factors,
-    x="Factor",
-    y="Value",
-    color="Color",
-    color_discrete_map={
-        "blue":   "#4C9BE8",
-        "red":    "#E85C5C",
-        "orange": "#E8A24C",
-        "green":  "#4CE87A",
-    },
-    title=f"Student metrics for {selected_id}",
-)
-fig.update_layout(showlegend=False)
-st.plotly_chart(fig, use_container_width=True)
+if top_factors:
+    factors_df = pd.DataFrame(top_factors)
+    fig = px.bar(
+        factors_df,
+        x="importance",
+        y="feature",
+        orientation="h",
+        title=f"Top factors for {selected_id}",
+        text="value"
+    )
+    fig.update_layout(yaxis={'categoryorder': 'total ascending'})
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.write("No factor breakdown available for this student.")
 
 st.divider()
 
