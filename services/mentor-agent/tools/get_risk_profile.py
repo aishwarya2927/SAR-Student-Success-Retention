@@ -12,7 +12,7 @@ def get_risk_profile(student_id: str) -> dict:
 
         response = requests.get(
             f"{RISK_ENGINE_URL}/predict/{student_id}",
-            timeout=10
+            timeout=60
         )
 
         response.raise_for_status()
