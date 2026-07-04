@@ -1,3 +1,6 @@
+# 
+
+
 import os
 
 os.environ["HF_HUB_DISABLE_XET"] = "1"
@@ -6,15 +9,8 @@ from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 
 
-embedding_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2",
-    cache_folder="./model_cache"
-)
-
-db = Chroma(
-    persist_directory="vector_store/chroma_db",
-    embedding_function=embedding_model
-)
+embedding_model = None
+db = None
 
 
 RISK_FACTOR_QUERIES = {
@@ -38,11 +34,26 @@ RISK_FACTOR_QUERIES = {
 }
 
 
-def search_support_resources(risk_factor: str) -> list:
-    """
-    Retrieves relevant university support resources for a given
-    student risk factor using semantic similarity search.
-    """
+def get_vector_db():
+    global embedding_model
+    global db
+
+    if db is None:
+
+        embedding_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            cache_folder="./model_cache"
+        )
+
+        db = Chroma(
+            persist_directory="vector_store/chroma_db",
+            embedding_function=embedding_model
+        )
+
+    return db
+
+
+def search_support_resources(risk_factor: str):
 
     query = RISK_FACTOR_QUERIES.get(risk_factor)
 
@@ -51,7 +62,9 @@ def search_support_resources(risk_factor: str) -> list:
 
     try:
 
-        results = db.similarity_search(
+        vector_db = get_vector_db()
+
+        results = vector_db.similarity_search(
             query,
             k=3
         )
