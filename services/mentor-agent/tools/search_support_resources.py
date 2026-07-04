@@ -1,13 +1,6 @@
-# 
-
-
 import os
 
 os.environ["HF_HUB_DISABLE_XET"] = "1"
-
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-
 
 embedding_model = None
 db = None
@@ -39,6 +32,10 @@ def get_vector_db():
     global db
 
     if db is None:
+
+        # Import only when needed (reduces startup memory)
+        from langchain_community.vectorstores import Chroma
+        from langchain_huggingface import HuggingFaceEmbeddings
 
         embedding_model = HuggingFaceEmbeddings(
             model_name="sentence-transformers/all-MiniLM-L6-v2",
