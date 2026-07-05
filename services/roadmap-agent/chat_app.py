@@ -2,9 +2,8 @@ import requests
 def get_faculty_intervention(student_id):
     try:
         response = requests.get(
-            f"http://127.0.0.1:8002/intervention/{student_id}",
-            timeout=5
-        )
+    f"https://sar-student-success-retention-3kvj.onrender.com/intervention/{student_id}"
+)
 
         if response.status_code == 200:
             return response.json()
@@ -58,7 +57,7 @@ def get_faculty_intervention(student_id):
 
     try:
         response = requests.get(
-            f"http://localhost:8000/intervention/{student_id}"
+            f"https://sar-student-success-retention-3kvj.onrender.com/intervention/{student_id}"
         )
 
         if response.status_code == 200:
@@ -96,7 +95,7 @@ def show_faculty_intervention(student_id):
         📋 <b>Intervention:</b>
 
         <p>
-        {intervention.get("plan")}
+        {intervention.get("plan") or intervention.get("follow_up_plan") or "<br>".join(intervention.get("recommended_actions", []))}
         </p>
 
         </div>
