@@ -13,7 +13,7 @@ df = load_students()
 # ── Header ────────────────────────────────────────────────────────────────────
 st.markdown("""
     <h1 style='text-align: center; padding-top: 1rem;'>🎓 Student Success & Retention System</h1>
-    <p style='text-align: center; color: #888; font-size: 1.1rem;'>
+    <p style='text-align: center; color: var(--text-color); opacity: 0.7; font-size: 1.1rem;'>
         Faculty Dashboard — Agentic AI Early Warning System
     </p>
 """, unsafe_allow_html=True)
@@ -42,10 +42,10 @@ c1, c2, c3, c4 = st.columns(4)
 
 with c1:
     st.markdown("""
-        <div style='background:#1e2130; border-radius:12px; padding:24px; text-align:center; border: 1px solid #2e3250; min-height: 140px;'>
+        <div style='background: var(--secondary-background-color); border-radius:12px; padding:24px; text-align:center; border: 1px solid rgba(128,128,128,0.3); min-height: 140px;'>
             <div style='font-size:2rem;'>📊</div>
-            <div style='font-size:1.1rem; font-weight:600; margin-top:8px;'>Overview</div>
-            <div style='color:#888; font-size:0.85rem; margin-top:6px;'>All students ranked by risk score with filters</div>
+            <div style='font-size:1.1rem; font-weight:600; margin-top:8px; color: var(--text-color);'>Overview</div>
+            <div style='color: var(--text-color); opacity: 0.7; font-size:0.85rem; margin-top:6px;'>All students ranked by risk score with filters</div>
         </div>
     """, unsafe_allow_html=True)
     st.markdown("")
@@ -54,10 +54,10 @@ with c1:
 
 with c2:
     st.markdown("""
-        <div style='background:#1e2130; border-radius:12px; padding:24px; text-align:center; border: 1px solid #2e3250; min-height: 140px;'>
+        <div style='background: var(--secondary-background-color); border-radius:12px; padding:24px; text-align:center; border: 1px solid rgba(128,128,128,0.3); min-height: 140px;'>
             <div style='font-size:2rem;'>👤</div>
-            <div style='font-size:1.1rem; font-weight:600; margin-top:8px;'>Student Detail</div>
-            <div style='color:#888; font-size:0.85rem; margin-top:6px;'>Deep dive into any student's risk profile</div>
+            <div style='font-size:1.1rem; font-weight:600; margin-top:8px; color: var(--text-color);'>Student Detail</div>
+            <div style='color: var(--text-color); opacity: 0.7; font-size:0.85rem; margin-top:6px;'>Deep dive into any student's risk profile</div>
         </div>
     """, unsafe_allow_html=True)
     st.markdown("")
@@ -66,10 +66,10 @@ with c2:
 
 with c3:
     st.markdown("""
-        <div style='background:#1e2130; border-radius:12px; padding:24px; text-align:center; border: 1px solid #2e3250; min-height: 140px;'>
+        <div style='background: var(--secondary-background-color); border-radius:12px; padding:24px; text-align:center; border: 1px solid rgba(128,128,128,0.3); min-height: 140px;'>
             <div style='font-size:2rem;'>⚖️</div>
-            <div style='font-size:1.1rem; font-weight:600; margin-top:8px;'>Compare Students</div>
-            <div style='color:#888; font-size:0.85rem; margin-top:6px;'>Side-by-side comparison of two students</div>
+            <div style='font-size:1.1rem; font-weight:600; margin-top:8px; color: var(--text-color);'>Compare Students</div>
+            <div style='color: var(--text-color); opacity: 0.7; font-size:0.85rem; margin-top:6px;'>Side-by-side comparison of two students</div>
         </div>
     """, unsafe_allow_html=True)
     st.markdown("")
@@ -78,10 +78,10 @@ with c3:
 
 with c4:
     st.markdown("""
-        <div style='background:#1e2130; border-radius:12px; padding:24px; text-align:center; border: 1px solid #2e3250; min-height: 140px;'>
+        <div style='background: var(--secondary-background-color); border-radius:12px; padding:24px; text-align:center; border: 1px solid rgba(128,128,128,0.3); min-height: 140px;'>
             <div style='font-size:2rem;'>🗂️</div>
-            <div style='font-size:1.1rem; font-weight:600; margin-top:8px;'>Workflow Tracker</div>
-            <div style='color:#888; font-size:0.85rem; margin-top:6px;'>Flag students and track mentoring progress</div>
+            <div style='font-size:1.1rem; font-weight:600; margin-top:8px; color: var(--text-color);'>Workflow Tracker</div>
+            <div style='color: var(--text-color); opacity: 0.7; font-size:0.85rem; margin-top:6px;'>Flag students and track mentoring progress</div>
         </div>
     """, unsafe_allow_html=True)
     st.markdown("")
@@ -92,7 +92,7 @@ st.divider()
 
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
-    <p style='text-align:center; color:#555; font-size:0.8rem;'>
+    <p style='text-align:center; color: var(--text-color); opacity: 0.5; font-size:0.8rem;'>
         Agentic AI Student Success & Retention System &nbsp;|&nbsp; Person C — Faculty Dashboard
     </p>
 """, unsafe_allow_html=True)
