@@ -22,7 +22,7 @@ ESCALATION_CONTACTS = ["Counselor - Dr. Nair", "Academic Dean", "Financial Aid O
 
 def load_students():
     """Load the students table from the DB, with display columns added."""
-    df = pd.read_sql("SELECT * FROM students ORDER BY prediction_confidence DESC", engine)
+    df = pd.read_sql("SELECT * FROM students ORDER BY student_id ASC", engine)
 
     df["risk_band"] = df["risk_band"].str.lower().str.strip()
     df["year_label"] = df["current_year"].map(YEAR_LABELS).fillna(df["current_year"].astype(str))
