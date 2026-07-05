@@ -33,7 +33,7 @@ def get_real_risk(row):
         student_id = row["student_id"]
         response = requests.get(
             f"https://sar-student-success-retention.onrender.com/predict/{student_id}",
-            timeout=15
+            timeout=60
         )
         response.raise_for_status()
         result = response.json()

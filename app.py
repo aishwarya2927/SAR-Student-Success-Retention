@@ -93,6 +93,6 @@ st.divider()
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
     <p style='text-align:center; color: var(--text-color); opacity: 0.5; font-size:0.8rem;'>
-        Agentic AI Student Success & Retention System &nbsp;|&nbsp; Person C — Faculty Dashboard
+        Agentic AI Student Success & Retention System &nbsp;|&nbsp; Faculty Dashboard
     </p>
 """, unsafe_allow_html=True)
