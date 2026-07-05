@@ -1,10 +1,8 @@
-fastapi
-uvicorn
-python-dotenv
-pydantic
-requests
 streamlit
-langchain
+requests
+pandas
+python-dotenv
+plotly
 langchain-google-genai
 google-generativeai
-chromadb
+langchain
