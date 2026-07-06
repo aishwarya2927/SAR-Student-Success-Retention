@@ -1060,7 +1060,14 @@ if st.button("🚀 Ask Agent", use_container_width=True):
         st.warning("Please enter a question.")
     else:
         with st.spinner("Routing your question to the right AI agent..."):
-            intent = classify_intent(user_question)
+            try:
+                intent = classify_intent(user_question)
+
+            except Exception as e:
+                st.error(
+                    "⚠️ Gemini API limit reached. Please wait for some time and try again."
+                )
+            st.stop()
 
         st.success(f"Detected Intent: {intent}")
         show_agent_pipeline(intent)
@@ -1077,7 +1084,17 @@ if st.button("🚀 Ask Agent", use_container_width=True):
 
         elif intent == "RISK":
             with st.spinner("Analyzing risk factors..."):
-                roadmap_result = generate_improvement_roadmap(student_id)
+                
+                try:
+                    roadmap_result = generate_improvement_roadmap(
+                        student_id
+                )
+
+                except Exception as e:
+                    st.error(
+                        "⚠️ Roadmap generation failed because Gemini API quota limit was reached. Please retry after some time."
+                )
+                st.stop()
                 show_risk_ui(roadmap_result)
 
         elif intent == "SUPPORT":
