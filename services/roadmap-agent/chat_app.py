@@ -111,7 +111,57 @@ st.set_page_config(
     page_icon="🎓",
     layout="wide",
 )
+if "student_logged_in" not in st.session_state:
+    st.session_state.student_logged_in = False
 
+
+if not st.session_state.student_logged_in:
+
+    st.title("🎓 Student Sign In")
+
+    st.write("Welcome to Student Success & Retention Platform")
+
+    name = st.text_input("Full Name")
+    email = st.text_input("Email")
+    student_login_id = st.text_input(
+        "Student ID",
+        placeholder="Example: STU202600058"
+    )
+
+    department = st.selectbox(
+        "Department",
+        [
+            "Computer Science",
+            "Information Technology",
+            "Electronics",
+            "Other"
+        ]
+    )
+
+    year = st.selectbox(
+        "Year",
+        [
+            "First Year",
+            "Second Year",
+            "Third Year",
+            "Final Year"
+        ]
+    )
+
+    if st.button("Continue to Dashboard"):
+
+        if student_login_id:
+
+            st.session_state.student_logged_in = True
+            st.session_state.student_id = student_login_id
+            st.session_state.student_name = name
+
+            st.rerun()
+
+        else:
+            st.warning("Please enter Student ID")
+
+    st.stop()
 # ---------------- GLOBAL CSS ----------------
 st.markdown(
     """
@@ -367,7 +417,8 @@ st.markdown(
 with st.sidebar:
     st.markdown("### 🎓 Student Profile")
 
-    student_id = st.text_input("Student ID", value="S1001")
+    student_id = st.session_state.student_id
+    st.write("🆔", student_id)
     gpa = st.number_input("Current GPA", min_value=0.0, max_value=10.0, value=7.4)
     interest = st.selectbox(
         "Career Interest",
