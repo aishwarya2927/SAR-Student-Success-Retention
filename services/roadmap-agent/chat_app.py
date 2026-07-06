@@ -616,7 +616,21 @@ def show_roadmap_ui(roadmap_result: dict) -> None:
     roadmap = roadmap_result["roadmap"]
     risk_profile = roadmap_result["risk_profile"]
     validation = roadmap_result["validation"]
+    st.markdown('<div class="section-title">📉 Risk Reduction Estimate</div>', unsafe_allow_html=True)
 
+    risk_reduction_estimate = (
+        roadmap.get("risk_reduction_estimate")
+        or "Following this roadmap can reduce academic risk by targeting attendance, backlog, and fee-delay factors."
+    )
+
+    st.markdown(
+        f"""
+        <div class="card" style="border-left:6px solid var(--green);">
+            {risk_reduction_estimate}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.markdown('<div class="section-title">📊 Risk Snapshot</div>', unsafe_allow_html=True)
 
     risk_score = risk_profile.get("risk_score", "NA")
@@ -795,11 +809,20 @@ def show_roadmap_ui(roadmap_result: dict) -> None:
     )
 
     st.markdown('<div class="section-title">💬 Encouraging Note</div>', unsafe_allow_html=True)
-    st.markdown(
-        f"""<div class="card">{roadmap.get("encouraging_note", "Keep following the plan consistently.")}</div>""",
-        unsafe_allow_html=True,
+    
+    encouraging_note = (
+        roadmap.get("encouraging_note")
+        or "Keep following the plan consistently. Small improvements every week lead to academic success."
     )
 
+    st.markdown(
+        f"""
+        <div class="card">
+            {encouraging_note}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.download_button(
         label="⬇️ Download Roadmap JSON",
         data=json.dumps(roadmap_result, indent=2),
