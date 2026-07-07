@@ -1,5 +1,7 @@
 import streamlit as st
+import streamlit_authenticator as stauth
 from utils import load_students
+import auth
 
 st.set_page_config(
     page_title="Student Risk Dashboard",
@@ -7,6 +9,48 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ── Landing page: choose Mentor or Student ────────────────────────────────────
+if "user_type" not in st.session_state:
+    st.markdown("<h1 style='text-align:center;'>🎓 Student Success & Retention System</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center;'>Please select how you'd like to continue</p>", unsafe_allow_html=True)
+    st.markdown("")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("👩‍🏫 I am a Mentor / Faculty", use_container_width=True):
+            st.session_state["user_type"] = "mentor"
+            st.rerun()
+    with col2:
+        st.link_button(
+            "🎓 I am a Student",
+            "https://sar-student-success-retention-lnxakgsa3fuxwvyomb7f2d.streamlit.app/",
+            use_container_width=True
+        )
+    st.stop()
+
+# ── Mentor login (no signup — accounts are created via create_mentor.py) ─────
+credentials = auth.load_credentials()
+
+authenticator = stauth.Authenticate(
+    credentials,
+    "student_dashboard_cookie",   # cookie name
+    "00b5251168b854f298fbb2bea5bfb3c0277f93fac43a1068606cfdc4b4992367",  # replace with a real random string, keep it secret
+    cookie_expiry_days=7
+)
+
+authenticator.login(location="main")
+
+if st.session_state.get("authentication_status") is False:
+    st.error("Incorrect email or password.")
+    st.stop()
+elif st.session_state.get("authentication_status") is None:
+    st.warning("Please enter your email and password.")
+    st.stop()
+
+# ── If we reach here, authentication_status is True — mentor is logged in ────
+authenticator.logout("Logout", location="sidebar")
+st.sidebar.write(f"Logged in as **{st.session_state['name']}**")
 
 df = load_students()
 
