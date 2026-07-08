@@ -1,26 +1,26 @@
 import os
 from pathlib import Path
 
-# Resolve the API directory dynamically
+# Resolve the API directory dynamically (.../services/risk-engine/api)
 HERE = Path(__file__).resolve().parent
 
-# Check if running inside the flat Docker container environment
-if os.path.exists("/app") and HERE.parts[-1] == "app":
-    # ── Flat Container Layout ──
+# Check if running inside Render's Docker environment or if files are flat in the api folder
+if os.path.exists("/app") or (HERE / "xgboost_academic_risk_pipeline.pkl").exists():
+    # ── Flat Layout (Render Docker Container AND your current local api folder) ──
     PROJECT_ROOT = HERE
     MODEL_PATH   = HERE / "xgboost_academic_risk_pipeline.pkl"
     ENCODER_PATH = HERE / "label_encoder_academic_risk.pkl"
     SHAP_PKL     = HERE / "shap_outputs" / "shap_values.pkl"
     DATASET_PATH = HERE / "student_success_dataset_30000.csv"
 else:
-    # ── Your Original Local Machine Nested Layout ──
-    PROJECT_ROOT = HERE.parents[3]
-    NOTEBOOK_DIR = PROJECT_ROOT / "services" / "risk-engine" / "notebooks"
+    # ── Fallback Original Nested Layout ──
+    PROJECT_ROOT = HERE.parents[1] # climbs back to risk-engine
+    NOTEBOOK_DIR = PROJECT_ROOT / "notebooks"
     
     MODEL_PATH   = NOTEBOOK_DIR / "xgboost_academic_risk_pipeline.pkl"
     ENCODER_PATH = NOTEBOOK_DIR / "label_encoder_academic_risk.pkl"
     SHAP_PKL     = NOTEBOOK_DIR / "shap_outputs" / "shap_values.pkl"
-    DATASET_PATH = PROJECT_ROOT / "datasets" / "student_success_dataset_30000.csv"
+    DATASET_PATH = HERE.parents[2] / "datasets" / "student_success_dataset_30000.csv"
 
 # Keep your exact list intact
 NON_FEATURE_COLS = [
