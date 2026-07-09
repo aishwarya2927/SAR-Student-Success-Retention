@@ -126,18 +126,18 @@ def get_approved_placement(student_id: str):
         )
 
     return JSONResponse({
-        "placement_id":          row[0],
-        "student_id":            row[1],
-        "target_companies":      json.loads(row[2]) if row[2] else [],
-        "readiness_summary":     row[3],
-        "company_comparison":    row[4],
-        "company_guidance":      row[5],
-        "preparation_steps":     json.loads(row[6]) if row[6] else [],
-        "timeline":              row[7],
-        "risk_factors":          json.loads(row[8]) if row[8] else [],
-        "data_verification_note":row[9],
-        "status":                row[10],
-        "approved_by":           row[11],
-        "approved_at":           str(row[12]) if row[12] else None,
-        "generated_at":          str(row[13]) if row[13] else None,
+        "placement_id":           row[0],
+        "student_id":             row[1],
+        "target_companies":       row[2].split(",") if row[2] else [],  # text → list
+        "readiness_summary":      row[3],
+        "company_comparison":     row[4],
+        "company_selection_guidance": row[5],
+        "preparation_steps":      row[6] if row[6] else [],  # jsonb → already parsed
+        "timeline":               row[7],
+        "risk_factors":           row[8] if row[8] else [],  # jsonb → already parsed
+        "data_verification_note": row[9],
+        "status":                 row[10],
+        "approved_by":            row[11],
+        "approved_at":            str(row[12]) if row[12] else None,
+        "generated_at":           str(row[13]) if row[13] else None,
     })
