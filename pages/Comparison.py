@@ -1,10 +1,15 @@
 import streamlit as st
 import plotly.graph_objects as go
+from auth import authenticator
 from utils import load_students
 
 st.title("⚖️ Compare Students")
 st.caption("Select two students to compare their risk profiles side by side")
 
+if st.session_state.get("authentication_status"):
+    authenticator.logout("Logout", location="sidebar")
+    st.sidebar.write(f"Logged in as **{st.session_state['name']}**")
+    
 df = load_students()
 
 st.divider()

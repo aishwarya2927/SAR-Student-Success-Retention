@@ -116,6 +116,122 @@ def get_latest_approved(student_id):
     conn.close()
     return row
 
+def refresh_target_companies(student_id):
+    try:
+        response = requests.get(
+            f"https://sar-roadmap-agent.onrender.com/student-target-companies/{student_id}",
+            timeout=40
+        )
+        if response.status_code == 200:
+            companies = response.json().get("target_companies", [])
+            conn = psycopg2.connect(DATABASE_URL)
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE students
+                SET target_companies = %s, target_companies_updated_at = CURRENT_TIMESTAMP
+                WHERE student_id = %s
+            """, (json.dumps(companies), student_id))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return companies
+        else:
+            return None
+    except Exception as e:
+        print(f"[WARN] Could not fetch target companies for {student_id}: {e}")
+        return None
+    
+# ── Placement plan approval workflow functions ──────────────────────────────
+
+# ── Placement plan approval workflow functions ──────────────────────────────
+# Mirrors the intervention_reports workflow exactly.
+
+def insert_placement(student_id, plan):
+    pp = plan.get("placement_plan", {}).get("placement_plan", {})
+
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO placement_reports
+        (student_id, target_companies, readiness_summary, company_comparison,
+         company_selection_guidance, preparation_steps, timeline,
+         risk_factors, data_verification_note, status)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending_approval')
+        RETURNING placement_id
+    """, (
+        student_id,
+        json.dumps(plan.get("target_companies", [])),
+        pp.get("readiness_summary"),
+        pp.get("company_comparison"),
+        pp.get("company_selection_guidance"),
+        json.dumps(pp.get("preparation_steps", [])),
+        pp.get("timeline"),
+        json.dumps(pp.get("risk_factors_and_actions", [])),
+        pp.get("data_verification_note"),
+    ))
+    new_id = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    return new_id
+
+
+
+def approve_placement(placement_id, faculty_name):
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE placement_reports
+        SET status='approved', approved_by=%s, approved_at=CURRENT_TIMESTAMP
+        WHERE placement_id=%s
+    """, (faculty_name, placement_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def reject_placement(placement_id):
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE placement_reports
+        SET status='rejected'
+        WHERE placement_id=%s
+    """, (placement_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+def get_latest_approved_placement(student_id):
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT 
+            placement_id,
+            student_id,
+            target_companies,
+            readiness_summary,
+            company_comparison,
+            company_selection_guidance,
+            preparation_steps,
+            timeline,
+            risk_factors,
+            data_verification_note,
+            status,
+            approved_by,
+            approved_at,
+            generated_at
+        FROM placement_reports
+        WHERE student_id=%s AND status='approved'
+        ORDER BY approved_at DESC LIMIT 1
+    """, (student_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return row
+
+
 
 # ── One-time setup ─────────────────────────────────────────────────────────
 if __name__ == "__main__":

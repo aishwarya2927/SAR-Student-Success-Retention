@@ -1,10 +1,10 @@
 import os
 import psycopg2
 from dotenv import load_dotenv
+import streamlit_authenticator as stauth
 
 load_dotenv()
 DATABASE_URL = os.environ["DATABASE_URL"]
-
 
 def load_credentials():
     """
@@ -36,3 +36,12 @@ def load_credentials():
         }
 
     return {"usernames": usernames}
+
+# Create authenticator object once here
+credentials = load_credentials()
+authenticator = stauth.Authenticate(
+    credentials,
+    "student_dashboard_cookie",   # cookie name
+    "00b5251168b854f298fbb2bea5bfb3c0277f93fac43a1068606cfdc4b4992367",  # keep secret
+    cookie_expiry_days=7
+)

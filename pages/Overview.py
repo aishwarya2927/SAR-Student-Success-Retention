@@ -1,9 +1,14 @@
 import ast
 import streamlit as st
+from auth import authenticator
 from utils import load_students, year_filter_options
 
 st.title("🎓 Student Risk Dashboard")
 st.caption("Faculty overview — all students ranked by dropout risk")
+
+if st.session_state.get("authentication_status"):
+    authenticator.logout("Logout", location="sidebar")
+    st.sidebar.write(f"Logged in as **{st.session_state['name']}**")
 
 df = load_students()
 
@@ -24,6 +29,7 @@ st.divider()
 st.sidebar.header("Filters")
 filter_band = st.sidebar.selectbox("Risk band", ["All", "high", "medium", "low"])
 filter_year = st.sidebar.selectbox("Year", year_filter_options(df))
+filter_dept = st.sidebar.selectbox("Department", ["All"] + sorted(df["department"].dropna().unique().tolist()))
 
 if filter_band == "high":
     df = df[df["risk_band"].isin(["high", "critical"])]
@@ -32,6 +38,9 @@ elif filter_band != "All":
 
 if filter_year != "All":
     df = df[df["year_label"] == filter_year]
+
+if filter_dept != "All":
+    df = df[df["department"] == filter_dept]
 
 # ── Student table ─────────────────────────────────────────────────────────────
 st.subheader(f"Showing {len(df)} students")

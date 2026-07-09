@@ -1,7 +1,6 @@
 import streamlit as st
-import streamlit_authenticator as stauth
 from utils import load_students
-import auth
+from auth import authenticator   # authenticator created in auth.py
 
 st.set_page_config(
     page_title="Student Risk Dashboard",
@@ -10,11 +9,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# ── Ensure logout key exists ────────────────────────────────────────────────
+if "logout" not in st.session_state:
+    st.session_state["logout"] = False
+
 # ── Landing page: choose Mentor or Student ────────────────────────────────────
 if "user_type" not in st.session_state:
     st.markdown("<h1 style='text-align:center;'>🎓 Student Success & Retention System</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align:center;'>Please select how you'd like to continue</p>", unsafe_allow_html=True)
-    st.markdown("")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -29,16 +31,7 @@ if "user_type" not in st.session_state:
         )
     st.stop()
 
-# ── Mentor login (no signup — accounts are created via create_mentor.py) ─────
-credentials = auth.load_credentials()
-
-authenticator = stauth.Authenticate(
-    credentials,
-    "student_dashboard_cookie",   # cookie name
-    "00b5251168b854f298fbb2bea5bfb3c0277f93fac43a1068606cfdc4b4992367",  # replace with a real random string, keep it secret
-    cookie_expiry_days=7
-)
-
+# ── Mentor login ─────────────────────────────────────────────────────────────
 authenticator.login(location="main")
 
 if st.session_state.get("authentication_status") is False:
@@ -48,10 +41,12 @@ elif st.session_state.get("authentication_status") is None:
     st.warning("Please enter your email and password.")
     st.stop()
 
-# ── If we reach here, authentication_status is True — mentor is logged in ────
-authenticator.logout("Logout", location="sidebar")
-st.sidebar.write(f"Logged in as **{st.session_state['name']}**")
+# ── If logged in ─────────────────────────────────────────────────────────────
+if st.session_state.get("authentication_status"):
+    authenticator.logout("Logout", location="sidebar")
+    st.sidebar.write(f"Logged in as **{st.session_state['name']}**")
 
+# ── Load student data ────────────────────────────────────────────────────────
 df = load_students()
 
 # ── Header ────────────────────────────────────────────────────────────────────

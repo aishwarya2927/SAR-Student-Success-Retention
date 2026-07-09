@@ -1,14 +1,22 @@
 import os
 import psycopg2
+from auth import authenticator
 import streamlit as st
 from dotenv import load_dotenv
-from utils import load_students, load_workflow, append_history, MENTOR_LIST, ESCALATION_CONTACTS
+from utils import load_students, load_workflow, append_history, ESCALATION_CONTACTS
 
 load_dotenv()
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 st.title("🗂️ Mentoring Workflow Tracker")
 st.caption("Flag at-risk students, assign mentors and track case progress")
+
+if st.session_state.get("authentication_status"):
+    authenticator.logout("Logout", location="sidebar")
+    st.sidebar.write(f"Logged in as **{st.session_state['name']}**")
+
+# ── Get logged-in mentor name ─────────────────────────────────────────────────
+logged_in_name = st.session_state.get("name", None)
 
 df          = load_students()
 df_workflow = load_workflow()
@@ -63,7 +71,6 @@ else:
         for i, stage in enumerate(STAGES):
             cx = gap * i + gap / 2
 
-            # Colour logic: green = done, blue = current, grey = upcoming
             if i < current_index or status == "resolved":
                 color = "#4CE87A"
             elif i == current_index:
@@ -71,7 +78,6 @@ else:
             else:
                 color = "#3a3f4b"
 
-            # Escalation branches off at "assigned" — show it in orange
             if status == "escalated" and stage == "assigned":
                 color = "#E8A24C"
 
@@ -88,13 +94,21 @@ else:
         return f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}">{lines}{circles}{labels}</svg>{extra}'
 
     st.markdown(stage_svg(), unsafe_allow_html=True)
-    st.markdown("")  # spacer
+    st.markdown("")
 
     # ── Contextual next action ────────────────────────────────────────────────
     if status == "flagged":
         st.write("**Next step: Assign a mentor**")
-        chosen_mentor = st.selectbox("Mentor", MENTOR_LIST, key="mentor_pick")
-        if st.button("Assign Mentor", use_container_width=True):
+
+        # Use logged-in mentor name directly — no dropdown needed
+        if logged_in_name:
+            st.caption(f"Assigning as: **{logged_in_name}**")
+            chosen_mentor = logged_in_name
+        else:
+            st.warning("You are not logged in. Please log in to assign a mentor.")
+            chosen_mentor = None
+
+        if st.button("Assign Mentor", use_container_width=True) and chosen_mentor:
             conn   = psycopg2.connect(DATABASE_URL)
             cursor = conn.cursor()
             cursor.execute(
