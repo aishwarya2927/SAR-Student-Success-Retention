@@ -6,3 +6,6 @@ plotly
 langchain-google-genai
 google-generativeai
 langchain
+fastapi
+uvicorn
+pydantic

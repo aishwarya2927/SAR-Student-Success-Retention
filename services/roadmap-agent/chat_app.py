@@ -1,4 +1,27 @@
 import requests
+def get_risk_prediction(student_id):
+
+    try:
+        student_features = get_student_data(student_id)
+
+        if student_features is None:
+            return None
+
+        response = requests.post(
+            "http://127.0.0.1:8000/predict",
+            json=student_features,
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            return response.json()
+
+        st.error(response.text)
+        return None
+
+    except Exception as e:
+        st.error(e)
+        return None
 def get_faculty_intervention(student_id):
     try:
         response = requests.get(
@@ -41,6 +64,7 @@ import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
+
 sys.path.append(str(BASE_DIR / "utils"))
 import re
 
@@ -48,13 +72,57 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+@st.cache_data
+def load_student_dataset():
+    csv_path = BASE_DIR.parent.parent / "datasets" / "student_success_dataset_30000.csv"
+    return pd.read_csv(csv_path)
+
+def build_roadmap_from_prediction(student_id):
+    prediction = get_risk_prediction(student_id)
+
+    if not prediction:
+        st.warning("Using fallback roadmap because ML prediction was not received.")
+        return fallback_roadmap(student_id)
+
+    return {
+        "student_id": student_id,
+        "risk_profile": {
+            "risk_score": prediction.get("risk_score", 0),
+            "risk_band": prediction.get("risk_band", "N/A"),
+            "top_factors": prediction.get("top_factors", [])
+        },
+        "roadmap": {
+            "risk_summary": prediction.get(
+                "risk_summary",
+                f"Student {student_id} risk is generated from ML Risk Engine."
+            ),
+            "four_week_plan": prediction.get("four_week_plan", {}),
+            "support_needed": prediction.get("support_needed", {}),
+            "risk_reduction_estimate": prediction.get(
+                "risk_reduction_estimate",
+                "Following the roadmap can help reduce academic risk."
+            ),
+            "encouraging_note": prediction.get(
+                "encouraging_note",
+                "Consistent weekly progress can improve academic performance."
+            )
+        },
+        "validation": {"is_valid": True}
+    }
+def get_student_data(student_id):
+    df = load_student_dataset()
+
+    student_row = df[df["student_id"] == student_id]
+
+    if student_row.empty:
+        return None
+
+    return student_row.iloc[0].to_dict()
 
 from agents.intent_router import classify_intent
 from modules.roadmap_generator import generate_improvement_roadmap
 from modules.career_module import generate_career_guidance
-@st.cache_data(ttl=3600)
-def cached_roadmap(student_id):
-    return generate_improvement_roadmap(student_id)
+
 def get_faculty_intervention(student_id):
 
     try:
@@ -415,37 +483,69 @@ st.markdown(
 
 # ---------------- SIDEBAR ----------------
 with st.sidebar:
+
     st.markdown("### 🎓 Student Profile")
 
     student_id = st.session_state.student_id
-    st.write("🆔", student_id)
-    gpa = st.number_input("Current GPA", min_value=0.0, max_value=10.0, value=7.4)
-    interest = st.selectbox(
-        "Career Interest",
-        ["AI", "Web Development", "Cybersecurity", "Data Science", "Other"],
+
+    student_data = get_student_data(student_id)
+
+    if student_data is None:
+        st.error("Student data not found")
+        st.stop()
+
+    # values coming from CSV dataset
+    gpa = student_data.get("cgpa", "N/A")
+    interest = student_data.get(
+        "recommended_career_path",
+        "N/A"
     )
+
+    risk_score = student_data.get(
+        "academic_risk_score",
+        "N/A"
+    )
+
+    risk_band = student_data.get(
+        "academic_risk_band",
+        "N/A"
+    )
+
+    placement_score = student_data.get(
+        "placement_readiness_score",
+        "N/A"
+    )
+
+    placement_probability = student_data.get(
+        "placement_probability",
+        "N/A"
+    )
+
+
+    st.markdown("### Current Snapshot")
+
+    st.write(f"🆔 **{student_id}**")
+    st.write(f"🏫 **Department:** {student_data.get('department', 'N/A')}")
+    st.write(f"📘 **Year:** {student_data.get('current_year', 'N/A')}")
+    st.write(f"🎓 **CGPA:** {gpa}")
+    st.write(f"⚠️ **Risk:** {risk_band} ({risk_score})")
+    st.write(f"💼 **Placement Score:** {placement_score}")
+    st.write(f"📈 **Placement Probability:** {placement_probability}")
+    st.write(f"🎯 **Career:** {interest}")
+
 
     st.divider()
 
-    st.markdown(
-        f"""
-        <div class="card" style="padding:16px;">
-            <div class="metric-title">Current Snapshot</div>
-            <div style="font-size:14px; color:#374151; line-height:1.7;">
-                🆔 <b>{student_id}</b><br>
-                🎓 GPA: <b>{gpa}</b><br>
-                🎯 Interest: <b>{interest}</b>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    show_dev_json = st.checkbox(
+        "🛠️ Show Developer Raw JSON",
+        value=False
     )
 
-    st.divider()
-    show_dev_json = st.checkbox("🛠️ Show Developer Raw JSON", value=False)
     st.session_state["show_dev_json"] = show_dev_json
 
-    st.caption("Student Academic Success & Retention Platform")
+    st.caption(
+        "Student Academic Success & Retention Platform"
+    )
 
 
 # ---------------- HEADER ----------------
@@ -1183,13 +1283,92 @@ def fallback_roadmap(student_id):
         },
         "validation": {"is_valid": True},
     }
+def build_roadmap_from_prediction(student_id):
+    prediction = get_risk_prediction(student_id)
+
+    st.write("DEBUG student_id:", student_id)
+    st.write("DEBUG prediction from API:", prediction)
+
+    if not prediction:
+        st.warning("Using fallback roadmap because ML prediction was not received.")
+        return fallback_roadmap(student_id)
+
+    ...
+
+    if not prediction:
+        st.warning("Using fallback roadmap because ML prediction was not received.")
+        return fallback_roadmap(student_id)
+
+    return {
+        "student_id": student_id,
+        "risk_profile": {
+            "risk_score": prediction.get("risk_score", 0),
+            "risk_band": prediction.get("risk_band", "N/A"),
+            "top_factors": prediction.get("top_factors", [])
+        },
+        "roadmap": {
+            "risk_summary": prediction.get(
+                "risk_summary",
+                f"Student {student_id} risk is generated from ML Risk Engine."
+            ),
+            "four_week_plan": prediction.get("four_week_plan", {}),
+            "support_needed": prediction.get("support_needed", {}),
+            "risk_reduction_estimate": prediction.get(
+                "risk_reduction_estimate",
+                "Following the roadmap can help reduce academic risk."
+            ),
+            "encouraging_note": prediction.get(
+                "encouraging_note",
+                "Consistent weekly progress can improve academic performance."
+            )
+        },
+        "validation": {"is_valid": True}
+    }
 # ================= MAIN PAGE FLOW =================
 # Only this section runs on every page load: header (already rendered above),
 # sidebar (already rendered above), and the chat input below.
 # NOTHING else executes until "Ask Agent" is clicked.
 
 st.markdown('<div class="section-title">💬 Ask the Student Success Agent</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">💼 Placement Plan Request</div>', unsafe_allow_html=True)
 
+target_companies = st.multiselect(
+    "Select target companies",
+    [
+        "Google", "Microsoft", "Amazon", "Meta", "Apple",
+        "Adobe", "Salesforce", "Oracle", "IBM",
+        "PhonePe", "Paytm", "Razorpay", "Flipkart", "Meesho",
+        "Zomato", "Swiggy", "CRED", "Zepto",
+        "TCS", "Infosys", "Wipro", "Accenture", "Capgemini",
+        "Deloitte", "Cognizant", "LTIMindtree", "Tech Mahindra",
+        "JPMorgan Chase", "Morgan Stanley", "Goldman Sachs",
+        "Barclays", "Deutsche Bank", "HSBC",
+        "NVIDIA", "Intel", "Qualcomm", "Cisco", "Samsung",
+        "ISRO", "DRDO", "NIC", "RBI"
+    ]
+)
+
+custom_company = st.text_input(
+    "Add another company if not listed",
+    placeholder="Example: Atlassian, Uber, Mastercard"
+)
+
+if st.button("📩 Prepare Placement Plan Request"):
+    companies = target_companies.copy()
+
+    if custom_company.strip():
+        companies.append(custom_company.strip())
+
+    if not companies:
+        st.warning("Please select or enter at least one target company.")
+    else:
+        placement_request = {
+            "student_id": student_id,
+            "target_companies": companies
+        }
+
+        st.success("Placement plan request prepared successfully.")
+        st.json(placement_request)
 user_question = st.text_input(
     "Your question",
     placeholder="Example: Why is my risk score high? How should I improve my GPA?",
@@ -1212,10 +1391,10 @@ if st.button("🚀 Ask Agent", use_container_width=True):
         elif intent == "ROADMAP":
             with st.spinner("Generating personalized roadmap..."):
                 try:
-                    roadmap_result = cached_roadmap(student_id)
+                    roadmap_result = build_roadmap_from_prediction(student_id)
 
                 except Exception:
-                    roadmap_result = fallback_roadmap(student_id)
+                    roadmap_result = build_roadmap_from_prediction(student_id)
 
                 show_roadmap_ui(roadmap_result)
                 show_faculty_intervention(student_id)
