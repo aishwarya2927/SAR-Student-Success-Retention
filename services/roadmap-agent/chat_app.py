@@ -72,6 +72,26 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+def save_target_companies(student_id, companies):
+    try:
+        response = requests.post(
+            "https://sar-roadmap-agent.onrender.com/student-target-companies",
+            json={
+                "student_id": student_id,
+                "target_companies": companies
+            },
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            return response.json()
+
+        st.error(response.text)
+        return None
+
+    except Exception as e:
+        st.error(f"Could not save target companies: {e}")
+        return None
 @st.cache_data
 def load_student_dataset():
     csv_path = BASE_DIR.parent.parent / "datasets" / "student_success_dataset_30000.csv"
@@ -79,6 +99,9 @@ def load_student_dataset():
 
 def build_roadmap_from_prediction(student_id):
     prediction = get_risk_prediction(student_id)
+
+    st.write("DEBUG student_id:", student_id)
+    st.write("DEBUG prediction from API:", prediction)
 
     if not prediction:
         st.warning("Using fallback roadmap because ML prediction was not received.")
@@ -582,7 +605,26 @@ def show_agent_pipeline(intent: str) -> None:
             else:
                 st.info(f"⏭️ {name}")
 
+def save_target_companies(student_id, companies):
+    try:
+        response = requests.post(
+            "https://sar-roadmap-agent.onrender.com/student-target-companies",
+            json={
+                "student_id": student_id,
+                "target_companies": companies
+            },
+            timeout=60
+        )
 
+        if response.status_code == 200:
+            return response.json()
+
+        st.error(response.text)
+        return None
+
+    except Exception as e:
+        st.error(f"Could not save target companies: {e}")
+        return None
 def show_risk_gauge(score: float) -> None:
     fig = go.Figure(
         go.Indicator(
@@ -1354,21 +1396,26 @@ custom_company = st.text_input(
 )
 
 if st.button("📩 Prepare Placement Plan Request"):
-    companies = target_companies.copy()
 
-    if custom_company.strip():
+    companies = list(target_companies)
+
+    if custom_company and custom_company.strip():
         companies.append(custom_company.strip())
 
     if not companies:
         st.warning("Please select or enter at least one target company.")
-    else:
-        placement_request = {
-            "student_id": student_id,
-            "target_companies": companies
-        }
 
-        st.success("Placement plan request prepared successfully.")
-        st.json(placement_request)
+    else:
+        saved_response = save_target_companies(student_id, companies)
+
+        if saved_response:
+            st.success("Target companies saved successfully.")
+            st.json(saved_response)
+
+        else:
+            st.error("Target companies could not be saved.")
+
+
 user_question = st.text_input(
     "Your question",
     placeholder="Example: Why is my risk score high? How should I improve my GPA?",
@@ -1402,7 +1449,7 @@ if st.button("🚀 Ask Agent", use_container_width=True):
         elif intent == "RISK":
             with st.spinner("Analyzing risk factors..."):
                 try:
-                    roadmap_result = fallback_roadmap(student_id)
+                    roadmap_result = build_roadmap_from_prediction(student_id)
                 except Exception:
                     st.error("Fallback roadmap is not defined properly.")
                     st.stop()
