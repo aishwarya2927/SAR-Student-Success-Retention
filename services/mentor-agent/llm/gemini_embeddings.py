@@ -13,13 +13,13 @@ def _get_client():
     return _client
 
 
-def _embed_with_retry(client, model, contents, config, max_retries=3):
+def _embed_with_retry(client, model, contents, config, max_retries=5):
     for attempt in range(max_retries):
         try:
             return client.models.embed_content(model=model, contents=contents, config=config)
         except ClientError as e:
             if e.code == 429 and attempt < max_retries - 1:
-                wait = 12 * (attempt + 1)  # 12s, 24s, 36s
+                wait = 20 * (attempt + 1)  # 20s, 40s, 60s, 80s, 100s
                 print(f"Rate limited, retrying in {wait}s...")
                 time.sleep(wait)
             else:
@@ -27,9 +27,7 @@ def _embed_with_retry(client, model, contents, config, max_retries=3):
 
 
 class GeminiEmbeddings:
-    """LangChain-compatible embeddings wrapper around Gemini's embedding API."""
-
-    def __init__(self, model="gemini-embedding-001", batch_size=50):
+    def __init__(self, model="gemini-embedding-001", batch_size=20):
         self.model = model
         self.batch_size = batch_size
 
@@ -45,6 +43,10 @@ class GeminiEmbeddings:
             )
             all_embeddings.extend([e.values for e in result.embeddings])
             print(f"Embedded {min(i + self.batch_size, len(texts))}/{len(texts)} chunks")
+
+            # Deliberate pause between batches to stay under per-minute quota
+            if i + self.batch_size < len(texts):
+                time.sleep(15)
 
         return all_embeddings
 
