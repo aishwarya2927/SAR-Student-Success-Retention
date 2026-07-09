@@ -1,11 +1,3 @@
-streamlit
-requests
-pandas
-python-dotenv
-plotly
-langchain-google-genai
-google-generativeai
-langchain
 fastapi
 uvicorn
 pydantic
