@@ -69,7 +69,8 @@ else:
     ENCODER_PATH = NOTEBOOK_DIR / "label_encoder_academic_risk.pkl"
     DATASET_PATH = HERE.parents[2] / "datasets" / "student_success_dataset_30000.csv"
 
-📂 Directory Structure
+
+##📂 Directory Structure
     services/risk-engine/
 ├── api/
 │   ├── config.py                      # Dynamic path mapping utility
