@@ -42,6 +42,6 @@ credentials = load_credentials()
 authenticator = stauth.Authenticate(
     credentials,
     "student_dashboard_cookie",   # cookie name
-    "00b5251168b854f298fbb2bea5bfb3c0277f93fac43a1068606cfdc4b4992367",  # keep secret
+    os.environ["AUTH_COOKIE_KEY"],  # signature key — kept in .env
     cookie_expiry_days=7
 )
