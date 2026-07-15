@@ -222,3 +222,6 @@ student_success_dataset_30000.csv
 
 services/mentor-agent/model_cache/
 services/mentor-agent/vector_store/
+
+migrate_to_supabase.py
+placement_report_migration.py
