@@ -375,6 +375,20 @@ with tab2:
         ap_company_guidance, ap_steps, ap_timeline, ap_risks, ap_data_note,
         ap_status, ap_approved_by, ap_approved_at, ap_generated_at) = approved_placement
 
+        # ── Outdated check — compare approved companies vs current from Person D ──
+        try:
+            d_resp = requests.get(
+                f"https://sar-roadmap-agent.onrender.com/student-target-companies/{selected_id}",
+                timeout=10
+            )
+            if d_resp.status_code == 200:
+                current_companies = set(d_resp.json().get("target_companies", []))
+                approved_companies = set(json.loads(ap_companies_raw)) if ap_companies_raw else set()
+                if current_companies and current_companies != approved_companies:
+                    st.warning("⚠️ **Outdated** — Student's target companies have changed since this plan was approved. Consider generating a new placement plan.")
+        except Exception:
+            pass  # silently skip if Person D's API is down — don't block the page
+
         st.info(f"**Summary:** {ap_summary or '—'}")
 
         # Target companies
