@@ -26,7 +26,7 @@ if "user_type" not in st.session_state:
     with col2:
         st.link_button(
             "🎓 I am a Student",
-            "https://sar-student-success-retention-lnxakgsa3fuxwvyomb7f2d.streamlit.app/",
+            "https://sar-student-success-retention-zuys6ykzm2ot6abhecsaws.streamlit.app/",
             use_container_width=True
         )
     st.stop()
