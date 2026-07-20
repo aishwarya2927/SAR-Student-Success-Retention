@@ -132,18 +132,26 @@ def low_risk_node(state: MentorState) -> MentorState:
     logger.info("Running Low Risk Node")
 
     risk_profile = state["risk_profile"]
+    student_id = state["student_id"]
 
-    recommendation = {
-        "student_summary":
-        "Student is currently classified as low risk. No intervention is required.",
+    from database import get_student
+    from tools.intervention_tool import draft_low_risk_plan
 
-        "recommended_actions": [],
-
-        "priority_level": "Low",
-
-        "follow_up_plan":
-        "Continue routine monitoring."
-    }
+    student_profile = get_student(student_id) or {}
+    
+    try:
+        recommendation = draft_low_risk_plan(student_profile, risk_profile)
+    except Exception as e:
+        logger.error(f"Error drafting low-risk plan: {e}")
+        recommendation = {
+            "student_summary":
+            "Student is currently classified as low risk. No intervention is required.",
+            "recommended_actions": [],
+            "priority_level": "Low",
+            "follow_up_plan":
+            "Continue routine monitoring.",
+            "recommended_resources": []
+        }
 
     state["status"] = "pending_approval"
 
@@ -157,4 +165,5 @@ def low_risk_node(state: MentorState) -> MentorState:
     }
 
     return state
+
 

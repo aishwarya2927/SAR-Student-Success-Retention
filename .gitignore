@@ -224,3 +224,4 @@ services/mentor-agent/model_cache/
 
 # Chroma Vector Database
 services/mentor-agent/vector_store/chroma_db/
+services/mentor-agent/students.db

@@ -1,7 +1,11 @@
 import os
 import time
 import json
+import sys
 from google import genai
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from database import get_student
 
 _client = None
 
@@ -12,7 +16,10 @@ DEFAULT_PRIORITY = "secondary"
 def _get_client():
     global _client
     if _client is None:
-        _client = genai.Client(api_key=os.environ["GEMINI_API_KEY_PLACEMENT"])
+        api_key = os.getenv("GEMINI_API_KEY_PLACEMENT") or os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY_PLACEMENT or GEMINI_API_KEY environment variable is not set.")
+        _client = genai.Client(api_key=api_key)
     return _client
 
 
@@ -121,6 +128,23 @@ def _normalize_risk_factors_and_actions(items) -> list:
     return normalized
 
 
+def _normalize_recommended_resources(resources) -> list:
+    if not isinstance(resources, list):
+        return []
+    normalized = []
+    for res in resources:
+        if not isinstance(res, dict):
+            continue
+        normalized.append({
+            "title": str(res.get("title", "")).strip(),
+            "type": str(res.get("type", "Course")).strip(),
+            "link": str(res.get("link", "")).strip(),
+            "description": str(res.get("description", "")).strip(),
+        })
+    return normalized
+
+
+
 def _success_envelope(plan: dict) -> dict:
     return {
         "generation_status": "ok",
@@ -153,6 +177,8 @@ Key Risk Factors: {risk_factors}
 Student's Placement Readiness Profile:
 {placement_profile_str}
 
+{career_preferences}
+
 Target Companies and available information:
 {company_sections}
 
@@ -173,10 +199,19 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, no markdown 
   "timeline": "paragraph describing a realistic timeline",
   "risk_factors_and_actions": [
     {{"risk": "risk factor name", "action": "how to address it"}}
+  ],
+  "recommended_resources": [
+    {{
+      "title": "Resource/Course/Playlist Title (e.g. 'freeCodeCamp System Design Course' or 'LeetCode Top Interview 150')",
+      "type": "Course | Playlist | Documentation | Book",
+      "link": "MUST be a 100% valid, existing URL. If recommending a specific course or playlist, use a search results link (e.g., 'https://www.youtube.com/results?search_query=system+design+playlist+freecodecamp' or 'https://www.coursera.org/search?query=system+design') to prevent 404 errors. Standard homepages like 'https://leetcode.com/' or 'https://www.geeksforgeeks.org/' are also acceptable. NEVER invent specific paths that do not exist.",
+      "description": "Short explanation of why this resource is suggested for the student's needs"
+    }}
   ]
 }}
 
 Leave "company_selection_guidance" as an empty string since target companies are already selected.
+Provide 3-5 recommended_resources tailored to the student's technical/soft skill gaps or target companies.
 Provide 4-6 preparation_steps, ordered by when the student should tackle them."""
 
 
@@ -188,6 +223,8 @@ Key Risk Factors: {risk_factors}
 
 Student's Placement Readiness Profile:
 {placement_profile_str}
+
+{career_preferences}
 
 Respond ONLY with valid JSON, no markdown code fences, no preamble, no markdown formatting (no asterisks, no bold, no headers) anywhere inside any string value, matching this EXACT structure with EVERY key present:
 
@@ -206,10 +243,19 @@ Respond ONLY with valid JSON, no markdown code fences, no preamble, no markdown 
   "timeline": "paragraph describing a realistic timeline, e.g. general skill-building milestones",
   "risk_factors_and_actions": [
     {{"risk": "risk factor name", "action": "how to address it"}}
+  ],
+  "recommended_resources": [
+    {{
+      "title": "Resource/Course/Playlist Title (e.g. 'freeCodeCamp System Design Course' or 'LeetCode Top Interview 150')",
+      "type": "Course | Playlist | Documentation | Book",
+      "link": "MUST be a 100% valid, existing URL. If recommending a specific course or playlist, use a search results link (e.g., 'https://www.youtube.com/results?search_query=system+design+playlist+freecodecamp' or 'https://www.coursera.org/search?query=system+design') to prevent 404 errors. Standard homepages like 'https://leetcode.com/' or 'https://www.geeksforgeeks.org/' are also acceptable. NEVER invent specific paths that do not exist.",
+      "description": "Short explanation of why this resource is suggested for the student's needs"
+    }}
   ]
 }}
 
 Leave "company_comparison" as an empty string since no target companies are selected yet.
+Provide 3-5 recommended_resources tailored to the student's technical/soft skill gaps or general career focus.
 Provide 4-6 preparation_steps, ordered by when the student should tackle them."""
 
 
@@ -228,12 +274,26 @@ def draft_placement_plan(student_id: str, target_companies: list[str], risk_band
     risk_factors_str = _stringify_factors(risk_factors)
     placement_profile_str = _stringify_placement_profile(placement_profile)
 
+    local_student = get_student(student_id)
+    pref_str = ""
+    if local_student:
+        pref_str = f"""
+Student Career & Placement Preferences (Tailor preparation recommendations to these):
+- Target Job Roles: {", ".join(local_student.get("preferred_roles", []))}
+- Preferred Locations: {", ".join(local_student.get("preferred_locations", []))}
+- Minimum Expected Package (CTC): {local_student.get("min_ctc") or "No Preference"}
+- Preferred Company Types: {", ".join(local_student.get("company_types", []))}
+- Max Service Bond Acceptable: {local_student.get("max_bond_years") or "No Limit"}
+- Preferred Work Mode: {local_student.get("work_mode") or "No Preference"}
+"""
+
     if not target_companies:
         prompt = GENERAL_READINESS_TEMPLATE.format(
             student_id=student_id,
             risk_band=risk_band,
             risk_factors=risk_factors_str,
-            placement_profile_str=placement_profile_str
+            placement_profile_str=placement_profile_str,
+            career_preferences=pref_str
         )
     else:
         company_sections = _build_company_sections(company_data)
@@ -242,7 +302,8 @@ def draft_placement_plan(student_id: str, target_companies: list[str], risk_band
             risk_band=risk_band,
             risk_factors=risk_factors_str,
             placement_profile_str=placement_profile_str,
-            company_sections=company_sections
+            company_sections=company_sections,
+            career_preferences=pref_str
         )
 
     client = _get_client()
@@ -252,7 +313,7 @@ def draft_placement_plan(student_id: str, target_companies: list[str], risk_band
     for attempt in range(max_retries):
         try:
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-3.1-flash-lite",
                 contents=prompt
             )
             raw_text = response.text.strip()
@@ -275,6 +336,7 @@ def draft_placement_plan(student_id: str, target_companies: list[str], risk_band
                 "preparation_steps": _normalize_preparation_steps(parsed.get("preparation_steps")),
                 "timeline": str(parsed.get("timeline", "")).strip(),
                 "risk_factors_and_actions": _normalize_risk_factors_and_actions(parsed.get("risk_factors_and_actions")),
+                "recommended_resources": _normalize_recommended_resources(parsed.get("recommended_resources")),
                 "data_verification_note": _verification_note(company_data),
             }
 

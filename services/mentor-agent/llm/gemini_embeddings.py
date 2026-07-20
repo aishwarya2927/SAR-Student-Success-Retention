@@ -9,7 +9,10 @@ _client = None
 def _get_client():
     global _client
     if _client is None:
-        _client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY_PLACEMENT")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY environment variable is not set.")
+        _client = genai.Client(api_key=api_key)
     return _client
 
 
