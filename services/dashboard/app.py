@@ -93,6 +93,89 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
+    # Create students table first
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS students (
+        student_id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        cgpa REAL,
+        backlog_count INTEGER DEFAULT 0,
+        attendance_rate REAL DEFAULT 100.0,
+        internal_marks_avg REAL,
+        gpa_trend TEXT DEFAULT 'Stable',
+        assignment_submission_rate REAL DEFAULT 100.0,
+        lms_login_frequency INTEGER,
+        hackathon_count INTEGER DEFAULT 0,
+        weekly_study_hours REAL,
+        time_management_score INTEGER,
+        coding_score INTEGER,
+        ai_ml_score INTEGER,
+        communication_score INTEGER,
+        teamwork_score INTEGER,
+        presentation_score INTEGER,
+        internship_count INTEGER DEFAULT 0,
+        completed_certifications INTEGER DEFAULT 0,
+        fee_delay_days INTEGER DEFAULT 0,
+        financial_stress_score REAL,
+        target_companies TEXT,
+        preferred_roles TEXT,
+        preferred_locations TEXT,
+        min_ctc TEXT,
+        company_types TEXT,
+        max_bond_years TEXT,
+        work_mode TEXT,
+        department TEXT,
+        current_year TEXT,
+        is_newly_active INTEGER DEFAULT 0,
+        added_by_mentor INTEGER DEFAULT 0,
+        assigned_faculty_email TEXT
+    )
+    """)
+
+    # Create risks table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS student_risks (
+        student_id TEXT PRIMARY KEY,
+        risk_band TEXT,
+        risk_score REAL,
+        confidence REAL,
+        top_factors TEXT,
+        probabilities TEXT,
+        last_updated TEXT,
+        FOREIGN KEY (student_id) REFERENCES students(student_id)
+    )
+    """)
+
+    # Create faculty table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS faculty (
+        email TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        password TEXT NOT NULL,
+        department TEXT
+    )
+    """)
+
+    # Create intervention_reports table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS intervention_reports (
+        intervention_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id TEXT NOT NULL,
+        risk_band TEXT,
+        prediction_confidence REAL,
+        student_summary TEXT,
+        recommended_actions TEXT,
+        priority_level TEXT,
+        follow_up_plan TEXT,
+        recommended_resources TEXT,
+        status TEXT DEFAULT 'pending_approval',
+        approved_by TEXT,
+        approved_at TEXT,
+        generated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(student_id)
+    )
+    """)
+    
     # Workflow status table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS dashboard_workflow (
