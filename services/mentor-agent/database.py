@@ -1,13 +1,63 @@
-import sqlite3
-import json
 import os
+import json
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+IS_POSTGRES = DATABASE_URL is not None
+
+if IS_POSTGRES:
+    import psycopg2
+    from psycopg2.extras import DictCursor
+else:
+    import sqlite3
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "students.db")
 
+class PostgresCursorWrapper:
+    def __init__(self, cursor):
+        self.cursor = cursor
+    
+    def execute(self, query, params=None):
+        # Translate SQLite placeholders to PostgreSQL placeholders
+        query = query.replace('?', '%s')
+        # Translate SQLite AUTOINCREMENT to PostgreSQL SERIAL keys
+        query = query.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
+        self.cursor.execute(query, params or ())
+        
+    def fetchone(self):
+        return self.cursor.fetchone()
+        
+    def fetchall(self):
+        return self.cursor.fetchall()
+        
+    def __getattr__(self, name):
+        return getattr(self.cursor, name)
+
+class DatabaseConnectionWrapper:
+    def __init__(self, conn, is_postgres=False):
+        self.conn = conn
+        self.is_postgres = is_postgres
+        
+    def cursor(self):
+        cursor = self.conn.cursor(cursor_factory=DictCursor) if self.is_postgres else self.conn.cursor()
+        return PostgresCursorWrapper(cursor) if self.is_postgres else cursor
+        
+    def commit(self):
+        self.conn.commit()
+        
+    def close(self):
+        self.conn.close()
+        
+    def __getattr__(self, name):
+        return getattr(self.conn, name)
+
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if IS_POSTGRES:
+        conn = psycopg2.connect(DATABASE_URL)
+        return DatabaseConnectionWrapper(conn, is_postgres=True)
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return DatabaseConnectionWrapper(conn, is_postgres=False)
 
 def init_db():
     conn = get_connection()
@@ -153,12 +203,12 @@ def init_db():
     # Migration helper to add recommended_resources column if table existed prior
     try:
         cursor.execute("ALTER TABLE intervention_reports ADD COLUMN recommended_resources TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     # Migration helper to add assigned_faculty_email to students table
     try:
         cursor.execute("ALTER TABLE students ADD COLUMN assigned_faculty_email TEXT")
-    except sqlite3.OperationalError:
+    except Exception:
         pass
     conn.commit()
     conn.close()
@@ -478,8 +528,11 @@ def register_faculty(name: str, email: str, password: str, department: str) -> b
         """, (name, email.strip().lower(), password, department))
         conn.commit()
         return True
-    except sqlite3.IntegrityError:
-        return False
+    except Exception as e:
+        err_name = type(e).__name__
+        if "IntegrityError" in err_name or "UniqueViolation" in err_name:
+            return False
+        raise e
     finally:
         conn.close()
 

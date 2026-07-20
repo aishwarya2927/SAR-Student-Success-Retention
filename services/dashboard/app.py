@@ -29,14 +29,63 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+IS_POSTGRES = DATABASE_URL is not None
+
+if IS_POSTGRES:
+    import psycopg2
+    from psycopg2.extras import DictCursor
+else:
+    import sqlite3
+
+class PostgresCursorWrapper:
+    def __init__(self, cursor):
+        self.cursor = cursor
+    
+    def execute(self, query, params=None):
+        query = query.replace('?', '%s')
+        query = query.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
+        self.cursor.execute(query, params or ())
+        
+    def fetchone(self):
+        return self.cursor.fetchone()
+        
+    def fetchall(self):
+        return self.cursor.fetchall()
+        
+    def __getattr__(self, name):
+        return getattr(self.cursor, name)
+
+class DatabaseConnectionWrapper:
+    def __init__(self, conn, is_postgres=False):
+        self.conn = conn
+        self.is_postgres = is_postgres
+        
+    def cursor(self):
+        cursor = self.conn.cursor(cursor_factory=DictCursor) if self.is_postgres else self.conn.cursor()
+        return PostgresCursorWrapper(cursor) if self.is_postgres else cursor
+        
+    def commit(self):
+        self.conn.commit()
+        
+    def close(self):
+        self.conn.close()
+        
+    def __getattr__(self, name):
+        return getattr(self.conn, name)
+
 # Path to the shared SQLite database
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "mentor-agent", "students.db"))
 MENTOR_AGENT_URL = os.environ.get("MENTOR_AGENT_URL", "http://127.0.0.1:8000")
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if IS_POSTGRES:
+        conn = psycopg2.connect(DATABASE_URL)
+        return DatabaseConnectionWrapper(conn, is_postgres=True)
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return DatabaseConnectionWrapper(conn, is_postgres=False)
 
 # ── Initialize Database Tables for Dashboard ──────────────────────────────
 def init_db():
