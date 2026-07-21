@@ -46,6 +46,11 @@ class PostgresCursorWrapper:
         query = query.replace('?', '%s')
         query = query.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
         self.cursor.execute(query, params or ())
+
+    def executemany(self, query, params_seq):
+        query = query.replace('?', '%s')
+        query = query.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
+        self.cursor.executemany(query, params_seq)
         
     def fetchone(self):
         return self.cursor.fetchone()
