@@ -1,0 +1,3873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Success & Placement Roadmap Agent</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --container-bg: rgba(17, 24, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            
+            --primary: #8b5cf6; /* Violet */
+            --primary-glow: rgba(139, 92, 246, 0.4);
+            --secondary: #06b6d4; /* Cyan */
+            --secondary-glow: rgba(6, 182, 212, 0.4);
+            
+            --accent: #ec4899; /* Pink */
+            
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            
+            --success: #10b981; /* Emerald */
+            --success-glow: rgba(16, 185, 129, 0.2);
+            --warning: #f59e0b; /* Amber */
+            --warning-glow: rgba(245, 158, 11, 0.2);
+            --danger: #ef4444; /* Rose */
+            --danger-glow: rgba(239, 68, 68, 0.2);
+            
+            --card-radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.15) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+
+        /* ── Header ── */
+        header {
+            padding: 24px 40px;
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo i {
+            font-size: 28px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo span {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, #d1d5db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-tag {
+            font-size: 11px;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #c084fc;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+
+        /* ── Main Container ── */
+        main {
+            flex: 1;
+            max-width: 1300px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* ── Glassmorphic Card Style ── */
+        .glass-card {
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(16px);
+            border-radius: var(--card-radius);
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: var(--transition);
+        }
+
+        /* ── Tabs / Stepper ── */
+        .stepper-container {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(17, 24, 39, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            padding: 6px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .step-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            background: transparent;
+        }
+
+        .step-tab i {
+            font-size: 16px;
+        }
+
+        .step-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        /* ── Form Styling ── */
+        .form-section {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-header {
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 16px;
+        }
+
+        .section-header h2 {
+            font-size: 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header h2 i {
+            color: var(--secondary);
+        }
+
+        .section-header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            .stepper-container {
+                flex-direction: column;
+                border-radius: 16px;
+                padding: 10px;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-label-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #d1d5db;
+        }
+
+        .optional-badge {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Info Tooltip */
+        .tooltip-trigger {
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 12px;
+            transition: var(--transition);
+        }
+
+        .tooltip-trigger:hover {
+            color: var(--secondary);
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 11px;
+            color: #e5e7eb;
+            max-width: 250px;
+            z-index: 50;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            display: none;
+            backdrop-filter: blur(8px);
+        }
+
+        .tooltip-trigger:hover + .tooltip {
+            display: block;
+        }
+
+        /* Custom Inputs */
+        input[type="text"], select {
+            width: 100%;
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+            background: rgba(31, 41, 55, 0.8);
+        }
+
+        /* Number Counters */
+        .counter-input {
+            display: flex;
+            align-items: center;
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            width: 140px;
+        }
+
+        .counter-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            width: 44px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        .counter-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .counter-val {
+            flex: 1;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+        }
+
+        /* Slider Inputs */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--primary-glow);
+            transition: var(--transition);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .slider-val {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--secondary);
+            min-width: 32px;
+            text-align: right;
+        }
+
+        /* Chips Multi-select */
+        .chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .chip-checkbox {
+            display: none;
+        }
+
+        .chip-label {
+            padding: 8px 16px;
+            background: rgba(31, 41, 55, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: var(--transition);
+            user-select: none;
+        }
+
+        .chip-label:hover {
+            color: white;
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(31, 41, 55, 0.6);
+        }
+
+        .chip-checkbox:checked + .chip-label {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: var(--primary);
+            color: #c084fc;
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
+        }
+
+        /* ── Target Companies Section ── */
+        .company-search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .company-search-box i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .company-search-box input {
+            padding-left: 44px !important;
+        }
+
+        .company-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding: 4px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .company-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .company-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Company Card checkbox */
+        .company-card-check {
+            display: none;
+        }
+
+        .company-card-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(31, 41, 55, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            min-height: 52px;
+        }
+
+        .company-card-label:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(31, 41, 55, 0.5);
+            color: white;
+        }
+
+        .company-card-check:checked + .company-card-label {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(139, 92, 246, 0.15));
+            border-color: var(--secondary);
+            color: #22d3ee;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.15);
+        }
+
+        /* ── Action Buttons ── */
+        .wizard-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 32px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-prev {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-prev:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-next {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        .btn-next:hover {
+            background: #7c3aed;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.6);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 4px 20px var(--primary-glow);
+            font-family: 'Outfit', sans-serif;
+            font-size: 15px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(6, 182, 212, 0.4);
+        }
+
+        /* ── Loader ── */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(11, 15, 25, 0.9);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,255,255,0.05);
+            border-top: 4px solid var(--secondary);
+            border-bottom: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px;
+            color: white;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .loader-subtext {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* ── Result Roadmap Section ── */
+        .roadmap-result {
+            display: none;
+            flex-direction: column;
+            gap: 32px;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Risk Indicator Header card */
+        .readiness-header-card {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            background: linear-gradient(135deg, rgba(17, 24, 39, 0.8), rgba(11, 15, 25, 0.8));
+            border: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            .readiness-header-card {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .risk-gauge {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .risk-gauge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+
+        .risk-low {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+        .risk-low::before { background: var(--success); }
+
+        .risk-medium {
+            background: rgba(245, 158, 11, 0.05);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+        .risk-medium::before { background: var(--warning); }
+
+        .risk-high {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+        .risk-high::before { background: var(--danger); }
+
+        .risk-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .risk-value {
+            font-size: 32px;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .risk-percentage {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Timeline / Preparation steps */
+        .timeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            padding-left: 32px;
+            margin-top: 16px;
+        }
+
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary), transparent);
+        }
+
+        .timeline-item {
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            transition: var(--transition);
+        }
+
+        .timeline-item:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateX(4px);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -32px;
+            top: 26px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--bg-color);
+            border: 3px solid var(--primary);
+            box-shadow: 0 0 8px var(--primary-glow);
+            z-index: 10;
+            transition: var(--transition);
+        }
+
+        .timeline-item:hover .timeline-dot {
+            background: var(--secondary);
+            border-color: var(--secondary);
+            box-shadow: 0 0 12px var(--secondary-glow);
+            transform: scale(1.2);
+        }
+
+        .timeline-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .timeline-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .timeline-badges {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        .badge-duration {
+            background: rgba(6, 182, 212, 0.1);
+            color: #22d3ee;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+
+        .badge-primary {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .badge-secondary {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .badge-ongoing {
+            background: rgba(139, 92, 246, 0.1);
+            color: #c084fc;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        .badge-final-stage {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .timeline-detail {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #d1d5db;
+        }
+
+        /* Grid results: compare & mitigations */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mitigation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .mitigation-table th {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .mitigation-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            line-height: 1.5;
+        }
+
+        .mitigation-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .risk-badge-cell {
+            color: #fb7185;
+            font-weight: 600;
+        }
+
+        /* Banner Verification Note */
+        .verification-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            background: rgba(6, 182, 212, 0.05);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .verification-banner i {
+            font-size: 20px;
+            color: var(--secondary);
+            margin-top: 2px;
+        }
+
+        .verification-banner p {
+            font-size: 13px;
+            color: #e5e7eb;
+            line-height: 1.5;
+        }
+
+        /* Printing and resetting */
+        .action-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .btn-restart {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-restart:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-print {
+            background: var(--secondary);
+            color: white;
+            box-shadow: 0 4px 15px var(--secondary-glow);
+        }
+
+        .btn-print:hover {
+            background: #0891b2;
+            box-shadow: 0 4px 20px rgba(6, 182, 212, 0.6);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Task completion styles */
+        .timeline-item.task-completed {
+            border-left: 2px solid var(--success) !important;
+            background: rgba(16, 185, 129, 0.03);
+        }
+
+        /* Recommended resource styles */
+        .resource-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .resource-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(6, 182, 212, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .resource-badge {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            border-radius: 6px;
+            align-self: flex-start;
+            margin-bottom: 10px;
+        }
+        .badge-resource-course {
+            background: rgba(6, 182, 212, 0.1);
+            color: #22d3ee;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+        .badge-resource-playlist {
+            background: rgba(236, 72, 153, 0.1);
+            color: #f472b6;
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+        .badge-resource-documentation {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .badge-resource-book {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* ── Landing Page Styles ── */
+        .landing-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .landing-header {
+            margin-bottom: 48px;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .landing-header h1 {
+            font-size: 40px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .landing-header p {
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .role-cards {
+            display: flex;
+            gap: 32px;
+            max-width: 1000px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .role-card {
+            flex: 1;
+            min-width: 300px;
+            max-width: 420px;
+            background: rgba(17, 24, 39, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 40px;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .role-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 0 15px 35px var(--primary-glow);
+        }
+
+        .role-icon {
+            font-size: 48px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .role-card h3 {
+            font-size: 22px;
+            color: white;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .role-card p {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            text-align: center;
+            margin-bottom: 28px;
+            flex: 1;
+        }
+
+        .role-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .role-card:hover .role-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-color: transparent;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        /* ── Login Modal Styles ── */
+        .login-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .login-modal {
+            background: rgba(17, 24, 39, 0.95);
+            border: 1px solid var(--border-color);
+            border-radius: var(--card-radius);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        /* ── App Wrappers ── */
+        #student-app-wrapper, #mentor-app-wrapper {
+            display: none;
+        }
+
+        /* ── Mentor Dashboard Styles ── */
+        .mentor-grid {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .mentor-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .mentor-section-card {
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(16px);
+            border-radius: var(--card-radius);
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 24px;
+        }
+
+        .mentor-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .mentor-stat-box {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .mentor-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .mentor-stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .action-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            transition: var(--transition);
+        }
+
+        .action-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .action-card-num {
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--primary);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .action-card-text {
+            font-size: 13px;
+            color: #e5e7eb;
+            line-height: 1.5;
+        }
+
+        .rag-source-tag {
+            background: rgba(6, 182, 212, 0.1);
+            color: #22d3ee;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .tool-run-tag {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mentor Sidebar layout */
+        .mentor-layout {
+            display: flex;
+            gap: 24px;
+            margin-top: 24px;
+            align-items: flex-start;
+        }
+        .mentor-sidebar {
+            width: 300px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background: rgba(17, 24, 39, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            backdrop-filter: blur(16px);
+            max-height: 750px;
+        }
+        .mentor-main-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .mentor-sidebar-list {
+            overflow-y: auto;
+            max-height: 550px;
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .mentor-sidebar-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: left;
+        }
+        .mentor-sidebar-item:hover, .mentor-sidebar-item.active {
+            background: rgba(6, 182, 212, 0.1);
+            border-color: var(--primary);
+        }
+        .mentor-sidebar-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .mentor-sidebar-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mentor-sidebar-id {
+            font-size: 11px;
+            font-family: monospace;
+            color: var(--text-muted);
+        }
+        .mentor-sidebar-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* Modal Add Student */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .modal-content {
+            background: #111827;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            width: 480px;
+            max-width: 90%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── ROLE SELECTION LANDING CONTAINER ── -->
+    <div id="landing-container" class="landing-container">
+        <div class="landing-header">
+            <i class="fa-solid fa-graduation-cap" style="font-size: 64px; color: var(--primary); margin-bottom: 20px;"></i>
+            <h1>SuccessPath</h1>
+            <p>Integrated Student Success & Retention Platform</p>
+        </div>
+        <div class="role-cards">
+            <!-- Student Card -->
+            <div class="role-card" onclick="selectRole('student')">
+                <div class="role-icon"><i class="fa-solid fa-user-graduate"></i></div>
+                <h3>Continue as Student</h3>
+                <p>Build your placement roadmap, check company preparation resources, and keep track of your tasks and learning materials.</p>
+                <button class="role-btn">Enter Student Portal</button>
+            </div>
+            <!-- Mentor Card -->
+            <div class="role-card" onclick="goToFacultyDashboard()">
+                <div class="role-icon"><i class="fa-solid fa-user-tie"></i></div>
+                <h3>Continue as Mentor / Faculty</h3>
+                <p>Analyze student risk engines, generate AI-powered academic intervention reports, and manage institutional support referrals.</p>
+                <button class="role-btn">Access Mentor Portal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── STUDENT PORTAL WRAPPER ── -->
+    <div id="student-app-wrapper">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>SuccessPath</span>
+                <div class="logo-tag">Student Agent</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <button onclick="logoutRole()" style="background: transparent; border: 1px solid var(--border-color); color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-arrow-left"></i> Change Role</button>
+                <div style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 8px;">
+                    <input type="text" id="mentor-search-id" placeholder="Mentor: Enter Student ID..." style="background: transparent; border: none; padding: 4px; font-size: 12px; width: 170px; color: white; outline: none;">
+                    <button onclick="lookupStudentProgress()" style="background: var(--primary); border: none; padding: 6px 12px; border-radius: 6px; color: white; font-size: 11px; cursor: pointer; transition: var(--transition); font-weight: 600;"><i class="fa-solid fa-magnifying-glass"></i> Track</button>
+                </div>
+                <div style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-regular fa-clock"></i> Local Time: <span>2026-07-18</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+        <!-- ── STUDENT LOGIN CONTAINER ── -->
+        <div id="student-login-container" class="glass-card" style="width: 450px; margin: 40px auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.4s ease;">
+            <div style="text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px;">
+                <i class="fa-solid fa-user-graduate" style="font-size: 48px; color: var(--primary); margin-bottom: 12px;"></i>
+                <h2 style="color: white; font-family: 'Outfit', sans-serif;">Student Success Portal</h2>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Log in to access your placement roadmap and mentor interventions.</p>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div class="form-group">
+                    <label for="login-student-id">Student ID</label>
+                    <input type="text" id="login-student-id" onkeydown="if(event.key === 'Enter') loginStudent()" placeholder="e.g. STU202611269" style="width: 100%; background: rgba(31, 41, 55, 0.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; color: white; margin-top: 6px; outline: none;">
+                </div>
+                <div class="form-group">
+                    <label for="login-student-name">Full Name</label>
+                    <input type="text" id="login-student-name" onkeydown="if(event.key === 'Enter') loginStudent()" placeholder="e.g. Aishwarya" style="width: 100%; background: rgba(31, 41, 55, 0.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; color: white; margin-top: 6px; outline: none;">
+                </div>
+            </div>
+            
+            <button onclick="loginStudent()" style="width: 100%; background: var(--primary); border: none; padding: 12px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fa-solid fa-right-to-bracket"></i> Log In
+            </button>
+            
+            <div style="text-align: center; font-size: 13px; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px;">
+                Not in the synthetic dataset? 
+                <a href="javascript:void(0)" onclick="showRegistrationForm()" style="color: var(--secondary); text-decoration: none; font-weight: 600; margin-left: 4px;">Register Profile <i class="fa-solid fa-arrow-right-long"></i></a>
+            </div>
+        </div>
+
+        <!-- ── WIZARD CARD ── -->
+        <div id="form-container" class="glass-card" style="display: none;">
+            
+            <!-- Tabs -->
+            <div class="stepper-container">
+                <button class="step-tab active" data-step="1" onclick="switchStep(1)">
+                    <i class="fa-solid fa-user-graduate"></i> Academics
+                </button>
+                <button class="step-tab" data-step="2" onclick="switchStep(2)">
+                    <i class="fa-solid fa-laptop-code"></i> Skills & Study
+                </button>
+                <button class="step-tab" data-step="3" onclick="switchStep(3)">
+                    <i class="fa-solid fa-sliders"></i> Preferences
+                </button>
+                <button class="step-tab" data-step="4" onclick="switchStep(4)">
+                    <i class="fa-solid fa-building-user"></i> Target Companies
+                </button>
+            </div>
+
+            <!-- Top Step Navigation Buttons -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 12px 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--border-color);">
+                <button type="button" id="top-prev-btn" onclick="navigateStep(-1)" style="padding: 8px 16px; font-size: 13px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: white; display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 6px; transition: var(--transition);"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;" id="top-step-indicator">Step 1 of 4</span>
+                <button type="button" id="top-next-btn" onclick="navigateStep(1)" style="padding: 8px 16px; font-size: 13px; background: var(--primary); border: none; color: white; display: flex; align-items: center; gap: 8px; cursor: pointer; border-radius: 6px; transition: var(--transition); font-weight: 600;">Next <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+
+            <!-- TAB 1: Academics -->
+            <div id="step-1" class="form-section active">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-book-open"></i> Academic & Basic Profile</h2>
+                    <p>Enter your basic credentials and current university scores. All metrics except Name and ID are optional.</p>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="name">Full Name</label>
+                        </div>
+                        <input type="text" id="name" placeholder="John Doe" value="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="student_id">Student ID</label>
+                        </div>
+                        <input type="text" id="student_id" placeholder="e.g. STU202600055" value="">
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 12px;">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="department">Department</label>
+                        </div>
+                        <select id="department" style="width: 100%; background: rgba(31, 41, 55, 0.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; color: white; outline: none;">
+                            <option value="Computer Engineering">Computer Engineering</option>
+                            <option value="Civil Engineering">Civil Engineering</option>
+                            <option value="AI & ML">AI & ML</option>
+                            <option value="Electronics & Telecommunication">Electronics & Telecommunication</option>
+                            <option value="Information Technology">Information Technology</option>
+                            <option value="Mechanical Engineering">Mechanical Engineering</option>
+                            <option value="Electrical Engineering">Electrical Engineering</option>
+                            <option value="Chemical Engineering">Chemical Engineering</option>
+                            <option value="Electronics & Computer Science">Electronics & Computer Science</option>
+                            <option value="Instrumentation Engineering">Instrumentation Engineering</option>
+                            <option value="Data Science">Data Science</option>
+                            <option value="Cyber Security">Cyber Security</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="current_year">Current Year</label>
+                        </div>
+                        <select id="current_year" style="width: 100%; background: rgba(31, 41, 55, 0.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; color: white; outline: none;">
+                            <option value="First Year">First Year</option>
+                            <option value="Second Year">Second Year</option>
+                            <option value="Third Year">Third Year</option>
+                            <option value="Final Year">Final Year</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid-3" style="margin-top: 12px;">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="cgpa">Current CGPA</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Your cumulative grade point average (out of 10). Leave blank if not applicable.</div>
+                        </div>
+                        <input type="text" id="cgpa" placeholder="e.g. 8.4" value="8.1">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Number of Active Backlogs</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Total number of currently uncleared or active backlog exams. Defaults to 0 if left blank.</div>
+                        </div>
+                        <div class="counter-input">
+                            <button type="button" class="counter-btn" onclick="adjustVal('backlog_count', -1)">-</button>
+                            <div id="backlog_count_val" class="counter-val">0</div>
+                            <button type="button" class="counter-btn" onclick="adjustVal('backlog_count', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Attendance Rate</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Your average attendance across all courses. Defaults to 100% if blank.</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="attendance_rate" min="0" max="100" value="85" oninput="updateSliderVal('attendance_rate')">
+                            <div id="attendance_rate_val" class="slider-val">85%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-3" style="margin-top: 12px;">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="internal_marks_avg">Average Test Score (%)</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Average percentage scored in periodic tests or mid-term examinations.</div>
+                        </div>
+                        <input type="text" id="internal_marks_avg" placeholder="e.g. 72" value="75">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="gpa_trend">Semester CGPA Trend</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Whether your CGPA has been going up, going down, or staying steady.</div>
+                        </div>
+                        <select id="gpa_trend">
+                            <option value="Stable">Stable</option>
+                            <option value="Upward" selected>Upward</option>
+                            <option value="Downward">Downward</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Assignment On-Time rate</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Estimated percentage of assignments you turn in before the deadline.</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="assignment_submission_rate" min="0" max="100" value="95" oninput="updateSliderVal('assignment_submission_rate')">
+                            <div id="assignment_submission_rate_val" class="slider-val">95%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-buttons">
+                    <div></div> <!-- Empty left -->
+                    <button class="btn btn-next" onclick="switchStep(2)">Next <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- TAB 2: Skills & Study -->
+            <div id="step-2" class="form-section">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-laptop-code"></i> Skills & Study Habits</h2>
+                    <p>Provide your coding and general tech skills, alongside your typical weekly self-study habits.</p>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Data Structures & Algorithms Skill (0-100)</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Your self-assessed or mock test coding score in Data Structures & Algorithms.</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="coding_score" min="0" max="100" value="70" oninput="updateSliderVal('coding_score')">
+                            <div id="coding_score_val" class="slider-val">70</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>AI/ML & Core Topics Skill (0-100)</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Your familiarity score in core computer science subjects (DBMS, OS, AI, ML).</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="ai_ml_score" min="0" max="100" value="60" oninput="updateSliderVal('ai_ml_score')">
+                            <div id="ai_ml_score_val" class="slider-val">60</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-3" style="margin-top: 12px;">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Communication Skill</label>
+                            <span class="optional-badge">(Optional)</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="communication_score" min="0" max="100" value="75" oninput="updateSliderVal('communication_score')">
+                            <div id="communication_score_val" class="slider-val">75</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Teamwork Score</label>
+                            <span class="optional-badge">(Optional)</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="teamwork_score" min="0" max="100" value="80" oninput="updateSliderVal('teamwork_score')">
+                            <div id="teamwork_score_val" class="slider-val">80</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Presentation Skills</label>
+                            <span class="optional-badge">(Optional)</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="presentation_score" min="0" max="100" value="70" oninput="updateSliderVal('presentation_score')">
+                            <div id="presentation_score_val" class="slider-val">70</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-3" style="margin-top: 12px;">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="weekly_study_hours">Self-Study Hours per Week</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Average hours you spend studying outside of regular class sessions.</div>
+                        </div>
+                        <input type="text" id="weekly_study_hours" placeholder="e.g. 24" value="20">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="lms_login_frequency">Weekly LMS Logins</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">How many times you log into the college portal (e.g., Moodle) per week.</div>
+                        </div>
+                        <input type="text" id="lms_login_frequency" placeholder="e.g. 15" value="12">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Time Management Score (0-100)</label>
+                            <span class="optional-badge">(Optional)</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="time_management_score" min="0" max="100" value="75" oninput="updateSliderVal('time_management_score')">
+                            <div id="time_management_score_val" class="slider-val">75</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-3" style="margin-top: 12px;">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Hackathons Competed</label>
+                            <span class="optional-badge">(Optional)</span>
+                        </div>
+                        <div class="counter-input">
+                            <button type="button" class="counter-btn" onclick="adjustVal('hackathon_count', -1)">-</button>
+                            <div id="hackathon_count_val" class="counter-val">1</div>
+                            <button type="button" class="counter-btn" onclick="adjustVal('hackathon_count', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Completed Internships</label>
+                            <span class="optional-badge">(Optional)</span>
+                        </div>
+                        <div class="counter-input">
+                            <button type="button" class="counter-btn" onclick="adjustVal('internship_count', -1)">-</button>
+                            <div id="internship_count_val" class="counter-val">0</div>
+                            <button type="button" class="counter-btn" onclick="adjustVal('internship_count', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Professional Certifications</label>
+                            <span class="optional-badge">(Optional)</span>
+                        </div>
+                        <div class="counter-input">
+                            <button type="button" class="counter-btn" onclick="adjustVal('completed_certifications', -1)">-</button>
+                            <div id="completed_certifications_val" class="counter-val">2</div>
+                            <button type="button" class="counter-btn" onclick="adjustVal('completed_certifications', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button class="btn btn-prev" onclick="switchStep(1)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button class="btn btn-next" onclick="switchStep(3)">Next <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- TAB 3: Preferences -->
+            <div id="step-3" class="form-section">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-gear"></i> Placement & Career Preferences</h2>
+                    <p>Customise your target roles, locations, CTC brackets, and specify any financial stress/fee concerns.</p>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-label-container">
+                        <label>Target Job Roles</label>
+                        <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                        <div class="tooltip">Select the job roles you are preparing to apply for.</div>
+                    </div>
+                    <div class="chips-container">
+                        <input type="checkbox" id="role_sde" class="chip-checkbox" value="SDE" checked>
+                        <label for="role_sde" class="chip-label">Software Developer (SDE)</label>
+                        
+                        <input type="checkbox" id="role_da" class="chip-checkbox" value="Data Analyst">
+                        <label for="role_da" class="chip-label">Data Analyst</label>
+                        
+                        <input type="checkbox" id="role_web" class="chip-checkbox" value="Web Developer" checked>
+                        <label for="role_web" class="chip-label">Web Developer</label>
+                        
+                        <input type="checkbox" id="role_ml" class="chip-checkbox" value="AI/ML Engineer">
+                        <label for="role_ml" class="chip-label">AI/ML Engineer</label>
+                        
+                        <input type="checkbox" id="role_sys" class="chip-checkbox" value="Systems Engineer">
+                        <label for="role_sys" class="chip-label">Systems Engineer</label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 16px;">
+                    <div class="form-label-container">
+                        <label>Preferred Locations</label>
+                    </div>
+                    <div class="chips-container">
+                        <input type="checkbox" id="loc_blr" class="chip-checkbox" value="Bangalore" checked>
+                        <label for="loc_blr" class="chip-label">Bangalore</label>
+                        
+                        <input type="checkbox" id="loc_hyd" class="chip-checkbox" value="Hyderabad" checked>
+                        <label for="loc_hyd" class="chip-label">Hyderabad</label>
+                        
+                        <input type="checkbox" id="loc_pune" class="chip-checkbox" value="Pune">
+                        <label for="loc_pune" class="chip-label">Pune</label>
+                        
+                        <input type="checkbox" id="loc_mum" class="chip-checkbox" value="Mumbai">
+                        <label for="loc_mum" class="chip-label">Mumbai</label>
+                        
+                        <input type="checkbox" id="loc_rem" class="chip-checkbox" value="Remote">
+                        <label for="loc_rem" class="chip-label">Remote</label>
+                    </div>
+                </div>
+
+                <div class="grid-3" style="margin-top: 16px;">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="min_ctc">Min CTC Expectation</label>
+                        </div>
+                        <select id="min_ctc">
+                            <option value="No Preference">No Preference</option>
+                            <option value="< 5 LPA">&lt; 5 LPA</option>
+                            <option value="5-10 LPA" selected>5 - 10 LPA</option>
+                            <option value="10-15 LPA">10 - 15 LPA</option>
+                            <option value="15+ LPA">15+ LPA</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="max_bond_years">Max Acceptable Bond (Years)</label>
+                        </div>
+                        <select id="max_bond_years">
+                            <option value="No Limit">No Limit</option>
+                            <option value="No Bond" selected>No Bond Required</option>
+                            <option value="1 Year">Max 1 Year</option>
+                            <option value="2 Years">Max 2 Years</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="work_mode">Preferred Work Mode</label>
+                        </div>
+                        <select id="work_mode">
+                            <option value="No Preference">No Preference</option>
+                            <option value="Hybrid" selected>Hybrid</option>
+                            <option value="Remote">Remote</option>
+                            <option value="On-Site">On-Site (Office)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 16px;">
+                    <div class="form-label-container">
+                        <label>Preferred Company Types</label>
+                    </div>
+                    <div class="chips-container">
+                        <input type="checkbox" id="type_prod" class="chip-checkbox" value="Product-based" checked>
+                        <label for="type_prod" class="chip-label">Product-based MNCs</label>
+                        
+                        <input type="checkbox" id="type_serv" class="chip-checkbox" value="Service-based">
+                        <label for="type_serv" class="chip-label">Service-based MNCs</label>
+                        
+                        <input type="checkbox" id="type_start" class="chip-checkbox" value="Startups" checked>
+                        <label for="type_start" class="chip-label">High-Growth Startups</label>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 16px;">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Tuition Fee Delay (Days)</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Number of days tuition fee payment has been delayed past the deadline. Defaults to 0.</div>
+                        </div>
+                        <div class="counter-input">
+                            <button type="button" class="counter-btn" onclick="adjustVal('fee_delay_days', -5)">-</button>
+                            <div id="fee_delay_days_val" class="counter-val">0</div>
+                            <button type="button" class="counter-btn" onclick="adjustVal('fee_delay_days', 5)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label>Financial Stress / Concern Level (1-10)</label>
+                            <span class="optional-badge">(Optional)</span>
+                            <i class="fa-solid fa-circle-info tooltip-trigger"></i>
+                            <div class="tooltip">Scale of 1-10 on how much financial concerns impact your focus.</div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="financial_stress_score" min="1" max="10" value="2" oninput="updateSliderVal('financial_stress_score')">
+                            <div id="financial_stress_score_val" class="slider-val">2</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button class="btn btn-prev" onclick="switchStep(2)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button class="btn btn-next" onclick="switchStep(4)">Next <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- TAB 4: Target Companies -->
+            <div id="step-4" class="form-section">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-building"></i> Select Target Companies</h2>
+                    <p>Select the target companies you wish to prepare for. We will cross-reference eligibility rules from our database.</p>
+                </div>
+
+                <div class="company-search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="company-search" placeholder="Search target companies (e.g. Google, Microsoft, TCS)..." oninput="filterCompanies()">
+                </div>
+
+                <div id="companies-list" class="company-grid">
+                    <!-- Loaded dynamically via API -->
+                    <div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-muted);">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading companies...
+                    </div>
+                </div>
+
+                <div class="wizard-buttons">
+                    <button class="btn btn-prev" onclick="switchStep(3)"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                    <button class="btn btn-submit" onclick="generateRoadmap()">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Placement Roadmap
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── LOADING SCREEN ── -->
+        <div id="loader" class="loader-overlay">
+            <div class="spinner"></div>
+            <div class="loader-text" id="loader-title">Consulting SuccessPath System</div>
+            <div class="loader-subtext" id="loader-subtitle">Retrieving academic and placement metrics...</div>
+        </div>
+
+        <!-- ── ROADMAP RESULTS ── -->
+        <div id="roadmap-container" class="roadmap-result">
+            
+            <!-- Header Result Card -->
+            <div class="glass-card readiness-header-card">
+                <div>
+                    <h2 style="font-size: 26px; color: white;" id="res-student-name">Aishwarya</h2>
+                    <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">
+                        Student ID: <span id="res-student-id" style="color: var(--secondary); font-weight: 600;">STU202600055</span> | 
+                        Target Roles: <span id="res-target-roles" style="color: white; font-weight: 500;">SDE</span>
+                    </p>
+                    
+                    <h3 style="margin-top: 24px; font-size: 15px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Readiness Summary</h3>
+                    <p style="margin-top: 6px; font-size: 14px; line-height: 1.6; color: #d1d5db;" id="res-summary">
+                        Loading summary...
+                    </p>
+                </div>
+                
+                <div class="risk-gauge" id="res-risk-gauge">
+                    <div class="risk-title">Academic Risk Band</div>
+                    <div class="risk-value" id="res-risk-band">LOW</div>
+                    <div class="risk-percentage" id="res-risk-confidence">Model Confidence: 99.8%</div>
+                </div>
+            </div>
+
+            <!-- Tab Links inside Roadmap Result -->
+            <div style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; margin-top: 20px;">
+                <button class="step-tab active" id="btn-tab-placement" onclick="switchRoadmapTab('placement')">
+                    <i class="fa-solid fa-route"></i> Career Placement Roadmap
+                </button>
+                <button class="step-tab" id="btn-tab-mentor" onclick="switchRoadmapTab('mentor')">
+                    <i class="fa-solid fa-user-tie"></i> Tasks Assigned by Mentor
+                </button>
+            </div>
+
+            <div id="section-roadmap-placement" style="display: flex; flex-direction: column; gap: 20px; width: 100%;">
+                <!-- Main Timeline Roadmap -->
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+                        <h2 style="font-size: 22px; color: white; display: flex; align-items: center; gap: 10px; margin-bottom: 0;">
+                            <i class="fa-solid fa-map-location-dot" style="color: var(--primary);"></i> Dynamic Timeline & Milestone Steps
+                        </h2>
+                        <!-- Progress Tracker -->
+                        <div id="progress-tracker-container" style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-color);">
+                            <span style="font-size: 13px; font-weight: 600; color: var(--secondary);" id="progress-text">0% Completed</span>
+                            <div style="width: 120px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; position: relative;">
+                                <div id="progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary)); transition: width 0.4s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-container" id="res-timeline">
+                        <!-- Dynamic Timeline Steps -->
+                    </div>
+                </div>
+
+                <!-- Grid: Compare & Risks -->
+                <div class="results-grid">
+                    <!-- Company Comparison -->
+                    <div class="glass-card">
+                        <h2 style="font-size: 18px; color: white; margin-bottom: 16px;">
+                            <i class="fa-solid fa-code-compare" style="color: var(--secondary); margin-right: 8px;"></i> Company Comparison Matrix
+                        </h2>
+                        <p style="font-size: 14px; line-height: 1.6; color: #d1d5db;" id="res-comparison">
+                            No target companies selected.
+                        </p>
+                    </div>
+
+                    <!-- Flagged Risks & Mitigations -->
+                    <div class="glass-card">
+                        <h2 style="font-size: 18px; color: white; margin-bottom: 16px;">
+                            <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent); margin-right: 8px;"></i> Flagged Risks & AI Mitigations
+                        </h2>
+                        <table class="mitigation-table">
+                            <thead>
+                                <tr>
+                                    <th>Flagged Risk factor</th>
+                                    <th>Recommended Action Plan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="res-mitigations">
+                                <!-- Dynamic Row values -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Recommended Resources Card -->
+                <div class="glass-card" id="res-resources-card" style="margin-bottom: 24px; display: none;">
+                    <h2 style="font-size: 18px; color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-graduation-cap" style="color: var(--primary);"></i> Recommended Course Playlists & Learning Resources
+                    </h2>
+                    <div id="res-resources-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                        <!-- Dynamic resources will go here -->
+                    </div>
+                </div>
+
+                <!-- Verification Banner -->
+                <div class="verification-banner" id="res-verification-card">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700; color: white;">Data Verification Note</h4>
+                        <p style="margin-top: 4px;" id="res-verification-note">
+                            Verified from institutional guides.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mentor Intervention Page Section -->
+            <div id="section-roadmap-mentor" style="display: none; flex-direction: column; gap: 20px; width: 100%;">
+                <!-- Mentor Details Banner -->
+                <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-left: 4px solid var(--primary); margin-bottom: 0;">
+                    <div>
+                        <h3 style="font-size: 18px; color: white; display: flex; align-items: center; gap: 8px; font-weight: 600;">
+                            <i class="fa-solid fa-user-tie" style="color: var(--primary);"></i> Academic Advisor & Mentor
+                        </h3>
+                        <p style="color: var(--text-muted); font-size: 13px; margin-top: 6px;">
+                            Assigned Mentor: <strong style="color: white;" id="mentor-assigned-name">Dr. Sharma</strong> (<span id="mentor-assigned-email">sharma@spit.ac.in</span>)
+                        </p>
+                    </div>
+                    <!-- Mentor Progress Tracker -->
+                    <div style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-color);">
+                        <span style="font-size: 13px; font-weight: 600; color: var(--primary);" id="mentor-progress-text">0% Completed</span>
+                        <div style="width: 120px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; position: relative;">
+                            <div id="mentor-progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.4s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Intervention Synthesis -->
+                <div class="glass-card" style="margin-bottom: 0;">
+                    <h3 style="font-size: 16px; margin-bottom: 12px; color: white; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-brain" style="color: var(--secondary);"></i> AI Academic Intervention Analysis
+                    </h3>
+                    <p style="font-size: 14px; line-height: 1.6; color: #d1d5db;" id="mentor-res-summary">
+                        No active academic intervention has been assigned by your mentor yet.
+                    </p>
+                </div>
+
+                <!-- Checklist Tasks -->
+                <div class="glass-card" style="margin-bottom: 0;">
+                    <h3 style="font-size: 16px; margin-bottom: 16px; color: white; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-clipboard-list" style="color: var(--primary);"></i> Recommended Action Items (Tasks Assigned to You)
+                    </h3>
+                    <div class="timeline-container" id="mentor-res-tasks">
+                        <!-- Assigned tasks -->
+                    </div>
+                </div>
+
+                <!-- Learning Resources -->
+                <div class="glass-card" id="mentor-res-resources-card" style="margin-bottom: 0; display: none;">
+                    <h3 style="font-size: 16px; margin-bottom: 16px; color: white; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-book-bookmark" style="color: var(--secondary);"></i> Recommended Study Resources & Courses
+                    </h3>
+                    <div id="mentor-res-resources-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                        <!-- Resources -->
+                    </div>
+                </div>
+
+                <!-- Follow-up Review Timeline -->
+                <div class="glass-card" id="mentor-res-followup-card" style="margin-bottom: 0; display: none;">
+                    <h3 style="font-size: 16px; margin-bottom: 12px; color: white; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-calendar-check" style="color: var(--accent);"></i> Follow-up & Review Timeline
+                    </h3>
+                    <p style="font-size: 14px; line-height: 1.6; color: #d1d5db;" id="mentor-res-followup">
+                        -
+                    </p>
+                </div>
+
+                <!-- Mentor feedback/progress comments -->
+                <div class="glass-card" id="mentor-comments-card" style="margin-bottom: 0;">
+                    <h3 style="font-size: 16px; margin-bottom: 12px; color: white; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-comments" style="color: var(--primary);"></i> Mentor's Feedback & Progress Comments
+                    </h3>
+                    <div id="mentor-comments-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto;">
+                        <!-- Comments will load here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Print & Reset Footer -->
+            <div class="action-footer">
+                <button class="btn btn-restart" onclick="resetForm()"><i class="fa-solid fa-arrow-rotate-left"></i> Edit Details</button>
+                <button class="btn btn-restart" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;" onclick="logoutStudentPortal()"><i class="fa-solid fa-sign-out-alt"></i> Log Out</button>
+                <button class="btn btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> Print Roadmap</button>
+            </div>
+
+        </div>
+    </main>
+    </div> <!-- Close #student-app-wrapper -->
+
+    <!-- ── MENTOR PORTAL WRAPPER ── -->
+    <div id="mentor-app-wrapper" style="display: none;">
+        <header>
+            <div class="logo">
+                <i class="fa-solid fa-user-tie" style="font-size: 28px; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                <span>SuccessPath</span>
+                <div class="logo-tag" style="background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); color: #22d3ee;">Mentor Agent</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 8px;">
+                    <input type="text" id="mentor-student-search-id" placeholder="Enter Student ID..." style="background: transparent; border: none; padding: 4px; font-size: 12px; width: 150px; color: white; outline: none;">
+                    <button onclick="loadMentorStudentData(false)" style="background: var(--secondary); border: none; padding: 6px 12px; border-radius: 6px; color: white; font-size: 11px; cursor: pointer; transition: var(--transition); font-weight: 600;"><i class="fa-solid fa-magnifying-glass"></i> Load</button>
+                </div>
+                <button onclick="logoutRole()" style="background: transparent; border: 1px solid var(--border-color); color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-arrow-left"></i> Change Role</button>
+                <div style="font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-regular fa-clock"></i> Local Time: <span>2026-07-19</span>
+                </div>
+            </div>
+        </header>
+        
+        <main class="mentor-layout">
+            <!-- Sidebar with Student list -->
+            <div class="mentor-sidebar">
+                <h3 style="font-size: 15px; color: white; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fa-solid fa-users" style="color: var(--primary); margin-right: 6px;"></i> Student List</span>
+                    <button onclick="openAddStudentModal()" style="background: var(--primary); border: none; padding: 6px 12px; border-radius: 6px; color: white; font-size: 11px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-user-plus"></i> Add</button>
+                </h3>
+                
+                <div class="search-box" style="margin-bottom: 12px; display: flex; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 4px 8px;">
+                    <i class="fa-solid fa-magnifying-glass" style="color: var(--text-muted); font-size: 12px; margin-right: 6px;"></i>
+                    <input type="text" id="mentor-sidebar-search" placeholder="Search by name or ID..." oninput="filterMentorSidebar()" style="background: transparent; border: none; padding: 4px; color: white; outline: none; font-size: 12px; width: 100%;">
+                </div>
+                
+                <div id="mentor-sidebar-list" class="mentor-sidebar-list">
+                    <!-- Student list rows go here -->
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="mentor-main-content">
+                <!-- Search State / Start Screen when no student is loaded -->
+                <div id="mentor-welcome-card" class="glass-card" style="text-align: center; padding: 60px 40px; animation: fadeInUp 0.5s ease;">
+                    <i class="fa-solid fa-chart-line" style="font-size: 54px; color: var(--secondary); margin-bottom: 24px;"></i>
+                    <h2>Faculty Decisions & Interventions Portal</h2>
+                    <p style="color: var(--text-muted); max-width: 600px; margin: 12px auto 28px; line-height: 1.6;">
+                        Select a student from the sidebar cohort list or enter a Student ID manually below to view risks, details, and recommendations.
+                    </p>
+                    <div style="display: flex; justify-content: center; gap: 12px; max-width: 480px; margin: 0 auto;">
+                        <input type="text" id="mentor-student-search-id-welcome" placeholder="Enter student ID (e.g. STU202600011)..." style="background: rgba(31, 41, 55, 0.6); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 20px; color: white; outline: none; flex: 1; text-align: center; font-size: 14px;">
+                        <button onclick="loadMentorStudentData(true)" style="background: var(--secondary); border: none; padding: 14px 28px; border-radius: 8px; color: white; font-size: 14px; cursor: pointer; transition: var(--transition); font-weight: 600; box-shadow: 0 4px 15px var(--secondary-glow);">Load Student</button>
+                    </div>
+                </div>
+
+                <!-- Student Dashboard Grid (shown after student data is loaded) -->
+                <div id="mentor-dashboard-grid" class="mentor-grid" style="display: none;">
+                
+                <!-- LEFT COLUMN: Risk Stats & Academic Profile -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <!-- Academic Risk Card -->
+                    <div class="mentor-section-card" style="animation: fadeInUp 0.5s ease;">
+                        <h3 style="font-size: 18px; color: white; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-triangle-exclamation" style="color: var(--warning); margin-right: 8px;"></i> Early Warning Risk</span>
+                            <span id="mentor-risk-badge" class="badge">PENDING</span>
+                        </h3>
+                        
+                        <div class="mentor-stats-grid">
+                            <div class="mentor-stat-box">
+                                <div class="mentor-stat-value" id="mentor-risk-score">--</div>
+                                <div class="mentor-stat-label">Model Confidence</div>
+                            </div>
+                            <div class="mentor-stat-box">
+                                <div class="mentor-stat-value" id="mentor-cgpa">--</div>
+                                <div class="mentor-stat-label">Current CGPA</div>
+                            </div>
+                            <div class="mentor-stat-box">
+                                <div class="mentor-stat-value" id="mentor-attendance">--</div>
+                                <div class="mentor-stat-label">Attendance</div>
+                            </div>
+                            <div class="mentor-stat-box">
+                                <div class="mentor-stat-value" id="mentor-backlogs">--</div>
+                                <div class="mentor-stat-label">Backlogs</div>
+                            </div>
+                        </div>
+
+                        <!-- Basic details -->
+                        <div style="font-size: 13px; display: flex; flex-direction: column; gap: 8px; color: #d1d5db; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div><strong>Student Name:</strong> <span id="mentor-student-name">--</span></div>
+                            <div><strong>Student ID:</strong> <span id="mentor-student-id">--</span></div>
+                            <div><strong>Fee Delay Days:</strong> <span id="mentor-fee-delay">--</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Contributing Factors (SHAP) -->
+                    <div class="mentor-section-card" style="animation: fadeInUp 0.6s ease;">
+                        <h3 style="font-size: 18px; color: white; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;"><i class="fa-solid fa-chart-bar" style="color: var(--secondary); margin-right: 8px;"></i> Contributing Risk Factors</h3>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Key SHAP indicators from machine learning model</p>
+                        <div id="mentor-factors-list" style="display: flex; flex-direction: column; gap: 12px;">
+                            <!-- Dynamic risk factors list -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Intervention Planner & Placement Progress -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    
+                    <!-- Toggle Tabs (Intervention vs Placement) -->
+                    <div class="stepper-container" style="margin-bottom: 0px; max-width: 500px;">
+                        <button id="mentor-tab-intervention" class="step-tab active" onclick="switchMentorSubTab('intervention')">
+                            <i class="fa-solid fa-file-invoice"></i> Academic Intervention
+                        </button>
+                        <button id="mentor-tab-placement" class="step-tab" onclick="switchMentorSubTab('placement')">
+                            <i class="fa-solid fa-briefcase"></i> Placement Tracker
+                        </button>
+                    </div>
+
+                    <!-- Tab A: Academic Intervention Plan -->
+                    <div id="mentor-panel-intervention" class="mentor-section-card" style="animation: fadeIn 0.4s ease;">
+                        <div id="mentor-intervention-not-generated" style="text-align: center; padding: 40px 20px;">
+                            <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 40px; color: var(--primary); margin-bottom: 16px;"></i>
+                            <h4>No Active Academic Intervention Generated</h4>
+                            <p style="color: var(--text-muted); font-size: 13px; max-width: 420px; margin: 8px auto 20px;">
+                                A personalized, data-grounded intervention plan needs to be generated using institutional support directories.
+                            </p>
+                            <button onclick="generateMentorIntervention()" style="background: var(--primary); border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px;"><i class="fa-solid fa-play"></i> Generate Intervention Plan</button>
+                        </div>
+
+                        <div id="mentor-intervention-generated" style="display: none;">
+                            <!-- Header status section -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 14px 20px; border-radius: 12px;">
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Intervention Status</div>
+                                    <div style="margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+                                        <span id="mentor-intervention-status-badge" class="badge badge-secondary">Pending Approval</span>
+                                    </div>
+                                </div>
+                                <div id="mentor-approval-stamp" style="font-size: 12px; color: var(--text-muted); text-align: right;">
+                                    <!-- Dynamic approval date/mentor details -->
+                                </div>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 20px;">
+                                <div>
+                                    <div style="font-size: 12px; color: var(--secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Student Summary</div>
+                                    <p id="mentor-intervention-summary" style="font-size: 14px; line-height: 1.6; color: #d1d5db;"></p>
+                                </div>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 150px; gap: 20px;">
+                                    <div>
+                                        <div style="font-size: 12px; color: var(--secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Recommended Actions</div>
+                                        <div id="mentor-intervention-actions" class="action-card-list">
+                                            <!-- Dynamic Actions -->
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 12px; color: var(--secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Priority Level</div>
+                                        <span id="mentor-intervention-priority" class="badge" style="font-size: 13px; padding: 6px 14px;">HIGH</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div style="font-size: 12px; color: var(--secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Follow-up Plan</div>
+                                    <p id="mentor-intervention-followup" style="font-size: 14px; line-height: 1.6; color: #d1d5db;"></p>
+                                </div>
+
+                                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;">
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Retrieved Support Resources (RAG Context)</div>
+                                    <div id="mentor-intervention-rag-sources">
+                                        <!-- Dynamic tags -->
+                                    </div>
+                                </div>
+
+                                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;">
+                                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">LangGraph Execution History</div>
+                                    <div id="mentor-intervention-tools-ran">
+                                        <!-- Dynamic tags -->
+                                    </div>
+                                </div>
+
+                                <!-- Review & Approval Panel -->
+                                <div id="mentor-approval-actions" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 10px;">
+                                    <div style="display: flex; gap: 16px; align-items: center; justify-content: flex-end;">
+                                        <span style="font-size: 13px; color: var(--text-muted);">Review Plan:</span>
+                                        <button onclick="rejectMentorIntervention()" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: var(--transition); border: 1px solid rgba(239, 68, 68, 0.3);">Reject Plan</button>
+                                        <button onclick="approveMentorIntervention()" style="background: var(--success); border: none; color: white; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: var(--transition); box-shadow: 0 4px 15px var(--success-glow);">Approve Plan</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab B: Student Placement roadmap Progress Tracker -->
+                    <div id="mentor-panel-placement" class="mentor-section-card" style="display: none; animation: fadeIn 0.4s ease;">
+                        <h4 style="font-size: 16px; color: white; margin-bottom: 12px;"><i class="fa-solid fa-bullseye" style="color: var(--primary); margin-right: 8px;"></i> Placement Readiness & Roadmap Tracker</h4>
+                        
+                        <div id="mentor-placement-not-available" style="padding: 30px; text-align: center; color: var(--text-muted);">
+                            No active placement roadmap or task checklist created by the student yet.
+                        </div>
+
+                        <div id="mentor-placement-available" style="display: none;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 14px 20px; border-radius: 12px;">
+                                <div>
+                                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Roadmap Progress</div>
+                                    <div id="mentor-placement-percent" style="font-size: 18px; font-weight: 700; color: white; margin-top: 4px;">0% Completed</div>
+                                </div>
+                                <div style="width: 200px; background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden;">
+                                    <div id="mentor-placement-progressbar" style="background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; height: 100%;"></div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div>
+                                    <h5 style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Roadmap Tasks</h5>
+                                    <div id="mentor-placement-tasks" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 8px;">
+                                        <!-- Dynamic task checkboxes -->
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Recommended Resources</h5>
+                                    <div id="mentor-placement-resources" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 8px;">
+                                        <!-- Dynamic resources -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            </div> <!-- Close .mentor-main-content -->
+        </main>
+    </div>
+
+    <script>
+        // Role & Auth State
+        let currentRole = null;
+        let loggedInMentor = null;
+        let currentMentorStudent = null;
+        let currentIntervention = null;
+        let mentorSubTab = 'intervention';
+
+        function selectRole(role) {
+            currentRole = role;
+            document.getElementById('landing-container').style.display = 'none';
+            if (role === 'student') {
+                document.getElementById('student-app-wrapper').style.display = 'block';
+                document.getElementById('mentor-app-wrapper').style.display = 'none';
+                // Reset student view state to Login
+                document.getElementById('student-login-container').style.display = 'flex';
+                document.getElementById('form-container').style.display = 'none';
+                document.getElementById('roadmap-container').style.display = 'none';
+                document.getElementById('login-student-id').value = '';
+                document.getElementById('login-student-name').value = '';
+            } else if (role === 'mentor') {
+                document.getElementById('student-app-wrapper').style.display = 'none';
+                document.getElementById('mentor-app-wrapper').style.display = 'block';
+                
+                // Show welcome card by default
+                document.getElementById('mentor-welcome-card').style.display = 'block';
+                document.getElementById('mentor-dashboard-grid').style.display = 'none';
+                
+                // Load students list in sidebar
+                loadMentorStudentsList();
+            }
+        }
+
+        function goToFacultyDashboard() {
+            window.location.href = window.location.origin.replace(':8000', ':8001');
+        }
+
+        function logoutRole() {
+            currentRole = null;
+            document.getElementById('landing-container').style.display = 'flex';
+            document.getElementById('student-app-wrapper').style.display = 'none';
+            document.getElementById('mentor-app-wrapper').style.display = 'none';
+        }
+
+        function switchMentorSubTab(tabName) {
+            mentorSubTab = tabName;
+            const tabs = ['intervention', 'placement'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`mentor-tab-${t}`);
+                const panel = document.getElementById(`mentor-panel-${t}`);
+                if (t === tabName) {
+                    btn.classList.add('active');
+                    panel.style.display = 'block';
+                } else {
+                    btn.classList.remove('active');
+                    panel.style.display = 'none';
+                }
+            });
+        }
+
+        // Store values for counter inputs
+        const counters = {
+            backlog_count: 0,
+            hackathon_count: 1,
+            internship_count: 0,
+            completed_certifications: 2,
+            fee_delay_days: 0
+        };
+
+        const activeCompanies = new Set();
+        let loadedCompaniesList = [];
+
+        // Load supported companies on startup
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadCompanies();
+            // Pre-check some default companies for demonstration
+            const tcsCheckbox = document.getElementById('comp_tcs');
+            if (tcsCheckbox) {
+                tcsCheckbox.checked = true;
+                activeCompanies.add('tcs');
+            }
+            const googleCheckbox = document.getElementById('comp_google');
+            if (googleCheckbox) {
+                googleCheckbox.checked = true;
+                activeCompanies.add('google');
+            }
+            updateTopNavButtons();
+        });
+
+        async function loadCompanies() {
+            try {
+                const response = await fetch('/api/companies');
+                if (response.ok) {
+                    loadedCompaniesList = await response.json();
+                    renderCompanies(loadedCompaniesList);
+                }
+            } catch (err) {
+                console.error("Error loading companies list:", err);
+            }
+        }
+
+        function renderCompanies(list) {
+            const container = document.getElementById('companies-list');
+            if (!container) return;
+            
+            if (list.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-muted);">No companies found.</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(c => `
+                <div>
+                    <input type="checkbox" id="comp_${c.key}" class="company-card-check" value="${c.key}" 
+                           ${activeCompanies.has(c.key) ? 'checked' : ''} onchange="toggleCompany('${c.key}')">
+                    <label for="comp_${c.key}" class="company-card-label">${c.name}</label>
+                </div>
+            `).join('');
+        }
+
+        function toggleCompany(key) {
+            if (activeCompanies.has(key)) {
+                activeCompanies.delete(key);
+            } else {
+                activeCompanies.add(key);
+            }
+        }
+
+        function filterCompanies() {
+            const query = document.getElementById('company-search').value.toLowerCase().trim();
+            const filtered = loadedCompaniesList.filter(c => c.name.toLowerCase().includes(query) || c.key.includes(query));
+            renderCompanies(filtered);
+        }
+
+        let currentStep = 1;
+
+        // Stepper Navigation
+        function switchStep(stepNum) {
+            // Validate basic inputs in Step 1 before moving forward
+            if (stepNum > 1) {
+                const name = document.getElementById('name').value.trim();
+                const studentId = document.getElementById('student_id').value.trim();
+                if (!name || !studentId) {
+                    alert("Please fill in your Full Name and Student ID in the Academics tab first.");
+                    switchStep(1);
+                    return;
+                }
+            }
+
+            // Toggle Tabs
+            document.querySelectorAll('.step-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (parseInt(tab.dataset.step) === stepNum) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Toggle sections
+            document.querySelectorAll('.form-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            document.getElementById(`step-${secIdMap(stepNum)}`).classList.add('active');
+
+            currentStep = stepNum;
+            updateTopNavButtons();
+        }
+
+        function navigateStep(direction) {
+            let nextStep = currentStep + direction;
+            if (nextStep >= 1 && nextStep <= 4) {
+                switchStep(nextStep);
+            }
+        }
+
+        function updateTopNavButtons() {
+            const prevBtn = document.getElementById('top-prev-btn');
+            const nextBtn = document.getElementById('top-next-btn');
+            const indicator = document.getElementById('top-step-indicator');
+            
+            if (indicator) {
+                indicator.innerText = `Step ${currentStep} of 4`;
+            }
+            
+            if (prevBtn) {
+                prevBtn.style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+            }
+            
+            if (nextBtn) {
+                if (currentStep === 4) {
+                    nextBtn.innerHTML = `Generate Roadmap <i class="fa-solid fa-wand-magic-sparkles"></i>`;
+                    nextBtn.onclick = generateRoadmap;
+                } else {
+                    nextBtn.innerHTML = `Next <i class="fa-solid fa-arrow-right"></i>`;
+                    nextBtn.onclick = () => navigateStep(1);
+                }
+            }
+        }
+
+        function secIdMap(step) {
+            return step; // Maps 1:1 in this layout
+        }
+
+        // Numeric Counter adjustment
+        function adjustVal(id, amount) {
+            let newVal = counters[id] + amount;
+            if (newVal < 0) newVal = 0;
+            
+            // Limit checks
+            if (id === 'backlog_count' && newVal > 15) return;
+            if (id === 'fee_delay_days' && newVal > 180) return;
+            
+            counters[id] = newVal;
+            document.getElementById(`${id}_val`).innerText = newVal;
+        }
+
+        // Slider value update
+        function updateSliderVal(id) {
+            const slider = document.getElementById(id);
+            const valSpan = document.getElementById(`${id}_val`);
+            
+            if (id.includes('score') || id.includes('stress')) {
+                valSpan.innerText = slider.value;
+            } else {
+                valSpan.innerText = slider.value + '%';
+            }
+        }
+
+        // Gather UI profile payload
+        function getPayload() {
+            // Selected roles
+            const preferred_roles = [];
+            document.querySelectorAll('.chip-checkbox[id^="role_"]:checked').forEach(cb => {
+                preferred_roles.push(cb.value);
+            });
+
+            // Selected locations
+            const preferred_locations = [];
+            document.querySelectorAll('.chip-checkbox[id^="loc_"]:checked').forEach(cb => {
+                preferred_locations.push(cb.value);
+            });
+
+            // Selected company types
+            const company_types = [];
+            document.querySelectorAll('.chip-checkbox[id^="type_"]:checked').forEach(cb => {
+                company_types.push(cb.value);
+            });
+
+            const cgpaVal = document.getElementById('cgpa').value.trim();
+            const internalMarksVal = document.getElementById('internal_marks_avg').value.trim();
+            const studyHoursVal = document.getElementById('weekly_study_hours').value.trim();
+            const lmsLoginsVal = document.getElementById('lms_login_frequency').value.trim();
+
+            return {
+                student_id: document.getElementById('student_id').value.trim(),
+                name: document.getElementById('name').value.trim(),
+                cgpa: cgpaVal ? parseFloat(cgpaVal) : null,
+                backlog_count: counters.backlog_count,
+                attendance_rate: parseFloat(document.getElementById('attendance_rate').value),
+                internal_marks_avg: internalMarksVal ? parseFloat(internalMarksVal) : null,
+                gpa_trend: document.getElementById('gpa_trend').value,
+                assignment_submission_rate: parseFloat(document.getElementById('assignment_submission_rate').value),
+                lms_login_frequency: lmsLoginsVal ? parseInt(lmsLoginsVal) : null,
+                
+                hackathon_count: counters.hackathon_count,
+                weekly_study_hours: studyHoursVal ? parseFloat(studyHoursVal) : null,
+                time_management_score: parseInt(document.getElementById('time_management_score').value),
+                coding_score: parseInt(document.getElementById('coding_score').value),
+                ai_ml_score: parseInt(document.getElementById('ai_ml_score').value),
+                communication_score: parseInt(document.getElementById('communication_score').value),
+                teamwork_score: parseInt(document.getElementById('teamwork_score').value),
+                presentation_score: parseInt(document.getElementById('presentation_score').value),
+                internship_count: counters.internship_count,
+                completed_certifications: counters.completed_certifications,
+                
+                fee_delay_days: counters.fee_delay_days,
+                financial_stress_score: parseFloat(document.getElementById('financial_stress_score').value),
+                
+                target_companies: Array.from(activeCompanies),
+                preferred_roles: preferred_roles,
+                preferred_locations: preferred_locations,
+                min_ctc: document.getElementById('min_ctc').value,
+                company_types: company_types,
+                max_bond_years: document.getElementById('max_bond_years').value,
+                work_mode: document.getElementById('work_mode').value,
+                department: document.getElementById('department').value,
+                current_year: document.getElementById('current_year').value
+            };
+        }
+
+        // Generate Roadmap API call
+        async function generateRoadmap() {
+            const payload = getPayload();
+            
+            // Show Loader
+            const loader = document.getElementById('loader');
+            const title = document.getElementById('loader-title');
+            const subtitle = document.getElementById('loader-subtitle');
+            
+            loader.style.display = 'flex';
+            
+            // Sequence titles to simulate AI thinking phases
+            const intervals = [
+                setTimeout(() => { title.innerText = "Querying Cloud Risk Engine..."; subtitle.innerText = "Evaluating risk model matrices..."; }, 1000),
+                setTimeout(() => { title.innerText = "Retrieving Curated RAG Resources..."; subtitle.innerText = "Performing semantic searches on university policy guides..."; }, 3500),
+                setTimeout(() => { title.innerText = "Analyzing Target Company Profiles..."; subtitle.innerText = "Checking selection and recruitment criteria..."; }, 6000),
+                setTimeout(() => { title.innerText = "Formulating Roadmap with Gemini..."; subtitle.innerText = "Mapping personalized timelines and milestone steps..."; }, 8500),
+            ];
+
+            try {
+                // Save profile to database first
+                const saveRes = await fetch('/api/students', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!saveRes.ok) {
+                    throw new Error("Failed to save student profile database record.");
+                }
+
+                // Query Placement Plan Generator
+                const planRes = await fetch('/generate-placement-plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_id: payload.student_id })
+                });
+
+                if (!planRes.ok) {
+                    const errObj = await planRes.json();
+                    throw new Error(errObj.detail || "Server error while generating plan.");
+                }
+
+                const data = await planRes.json();
+                if (data.placement_plan && data.placement_plan.generation_status === "error") {
+                    throw new Error(data.placement_plan.error_message || "Failed to generate placement plan.");
+                }
+                renderResults(data, payload);
+                
+                // Hide Form & Show Result
+                document.getElementById('form-container').style.display = 'none';
+                document.getElementById('roadmap-container').style.display = 'flex';
+
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            } finally {
+                // Clear intervals & hide loader
+                intervals.forEach(clearTimeout);
+                loader.style.display = 'none';
+            }
+        }
+
+        // Render response data to UI
+        function renderResults(data, payload) {
+            const plan = data.placement_plan.placement_plan;
+            const risk = data.risk_profile;
+            
+            // Basic details
+            document.getElementById('res-student-name').innerText = payload.name;
+            document.getElementById('res-student-id').innerText = payload.student_id;
+            
+            const roles = (payload.preferred_roles && payload.preferred_roles.length > 0) ? payload.preferred_roles.join(', ') : "Fresher Positions";
+            const locations = (payload.preferred_locations && payload.preferred_locations.length > 0) ? payload.preferred_locations.join(', ') : "No Preference";
+            document.getElementById('res-target-roles').innerText = `${roles} (${locations})`;
+            
+            // Risk Band gauge
+            const riskGauge = document.getElementById('res-risk-gauge');
+            const riskBandSpan = document.getElementById('res-risk-band');
+            const riskConfSpan = document.getElementById('res-risk-confidence');
+            
+            riskGauge.className = "risk-gauge"; // reset
+            const band = (risk.risk_band || "Low").toUpperCase();
+            riskBandSpan.innerText = band;
+            
+            if (band === 'HIGH' || band === 'CRITICAL') {
+                riskGauge.classList.add('risk-high');
+            } else if (band === 'MEDIUM') {
+                riskGauge.classList.add('risk-medium');
+            } else {
+                riskGauge.classList.add('risk-low');
+            }
+            
+            const confVal = risk.risk_score || 99.0;
+            riskConfSpan.innerText = `Prediction Confidence: ${confVal.toFixed(2)}%`;
+
+            // Summary
+            document.getElementById('res-summary').innerText = plan.readiness_summary;
+            
+            // Company Comparison
+            document.getElementById('res-comparison').innerText = plan.company_comparison || "Ready for general requirements across target criteria.";
+
+            // Timeline Steps
+            const stepsContainer = document.getElementById('res-timeline');
+            stepsContainer.innerHTML = '';
+            
+            if (plan.preparation_steps && plan.preparation_steps.length > 0) {
+                plan.preparation_steps.forEach((step, index) => {
+                    const priorityClass = `badge-${step.priority.toLowerCase()}`;
+                    const isCompleted = step.completed === 1 || step.completed === true;
+                    
+                    const stepItem = document.createElement('div');
+                    stepItem.className = 'timeline-item';
+                    if (isCompleted) {
+                        stepItem.classList.add('task-completed');
+                    }
+                    
+                    stepItem.innerHTML = `
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-meta" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                            <div>
+                                <h3 class="timeline-title" style="${isCompleted ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">${step.title}</h3>
+                                <div class="timeline-badges">
+                                    <span class="badge badge-duration"><i class="fa-regular fa-clock"></i> ${step.duration}</span>
+                                    <span class="badge ${priorityClass}">${step.priority}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="task-chk-${index}" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--secondary);" 
+                                       ${isCompleted ? 'checked' : ''} 
+                                       onchange="toggleTaskStatus('${data.student_id || payload.student_id}', ${index}, this.checked)">
+                                <label for="task-chk-${index}" style="font-size: 11px; color: var(--text-muted); cursor: pointer; user-select: none;">Done</label>
+                            </div>
+                        </div>
+                        <p class="timeline-detail" style="margin-top: 10px; ${isCompleted ? 'color: var(--text-muted);' : ''}">${step.detail}</p>
+                    `;
+                    stepsContainer.appendChild(stepItem);
+                });
+            } else {
+                stepsContainer.innerHTML = '<div style="color: var(--text-muted);">No preparation steps generated.</div>';
+            }
+
+            // Dynamic Progress calculation
+            const totalTasks = plan.preparation_steps ? plan.preparation_steps.length : 0;
+            const completedTasks = plan.preparation_steps ? plan.preparation_steps.filter(t => t.completed === 1 || t.completed === true).length : 0;
+            const percent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            document.getElementById('progress-text').innerText = `${percent}% Completed`;
+            document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+
+            // Recommended Resources Rendering
+            const resourcesContainer = document.getElementById('res-resources-list');
+            const resourcesCard = document.getElementById('res-resources-card');
+            if (resourcesContainer) {
+                resourcesContainer.innerHTML = '';
+                const resources = plan.recommended_resources || [];
+                if (resources.length > 0) {
+                    resourcesCard.style.display = 'block';
+                    resources.forEach(res => {
+                        const typeVal = (res.type || 'Course').trim();
+                        const typeClass = `badge-resource-${typeVal.toLowerCase().replace(' ', '_')}`;
+                        const card = document.createElement('div');
+                        card.className = 'resource-card';
+                        card.innerHTML = `
+                            <div>
+                                <span class="resource-badge ${typeClass}">${typeVal}</span>
+                                <h4 style="font-size: 14px; color: white; margin-bottom: 8px; font-weight:600;">${res.title}</h4>
+                                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;">${res.description}</p>
+                            </div>
+                            <a href="${res.link}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--secondary); text-decoration: none; font-weight: 600; transition: var(--transition);">
+                                Access Resource <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px;"></i>
+                            </a>
+                        `;
+                        resourcesContainer.appendChild(card);
+                    });
+                } else {
+                    resourcesCard.style.display = 'none';
+                }
+            }
+
+            // Mitigations Table
+            const mitigationsContainer = document.getElementById('res-mitigations');
+            mitigationsContainer.innerHTML = '';
+            
+            if (plan.risk_factors_and_actions && plan.risk_factors_and_actions.length > 0) {
+                plan.risk_factors_and_actions.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="risk-badge-cell"><i class="fa-solid fa-triangle-exclamation"></i> ${item.risk.replace('_', ' ').toUpperCase()}</td>
+                        <td>${item.action}</td>
+                    `;
+                    mitigationsContainer.appendChild(row);
+                });
+            } else {
+                mitigationsContainer.innerHTML = `
+                    <tr>
+                        <td colspan="2" style="text-align: center; color: var(--success); font-weight: 500;">
+                            <i class="fa-regular fa-circle-check"></i> No critical academic or financial risk factors flagged!
+                        </td>
+                    </tr>
+                `;
+            }
+
+            // Verification banner
+            document.getElementById('res-verification-note').innerText = plan.data_verification_note;
+            
+            // Asynchronously retrieve and render mentor-assigned interventions
+            const studentId = payload.student_id;
+            fetch(`/api/students/${studentId}/progress`)
+                .then(r => r.ok ? r.json() : null)
+                .then(progData => {
+                    if (progData) {
+                        fetch(`/api/students/${studentId}/interventions/latest`)
+                            .then(r => r.ok ? r.json() : null)
+                            .then(planData => {
+                                renderMentorInterventions(progData, planData);
+                            });
+                    }
+                })
+                .catch(err => console.error("Error loading mentor tasks:", err));
+        }
+
+        // Switch roadmap tab links
+        function switchRoadmapTab(tabName) {
+            const btnPlacement = document.getElementById('btn-tab-placement');
+            const btnMentor = document.getElementById('btn-tab-mentor');
+            const secPlacement = document.getElementById('section-roadmap-placement');
+            const secMentor = document.getElementById('section-roadmap-mentor');
+            
+            if (tabName === 'placement') {
+                btnPlacement.classList.add('active');
+                btnMentor.classList.remove('active');
+                secPlacement.style.display = 'flex';
+                secMentor.style.display = 'none';
+            } else {
+                btnPlacement.classList.remove('active');
+                btnMentor.classList.add('active');
+                secPlacement.style.display = 'none';
+                secMentor.style.display = 'flex';
+            }
+        }
+
+        // Render mentor-assigned interventions UI
+        function renderMentorInterventions(progData, plan) {
+            const summaryText = document.getElementById('mentor-res-summary');
+            const tasksContainer = document.getElementById('mentor-res-tasks');
+            const followupCard = document.getElementById('mentor-res-followup-card');
+            const followupText = document.getElementById('mentor-res-followup');
+            const resourcesCard = document.getElementById('mentor-res-resources-card');
+            const resourcesContainer = document.getElementById('mentor-res-resources-list');
+            const commentsContainer = document.getElementById('mentor-comments-list');
+            
+            // Render assigned mentor details
+            const mentor = progData.assigned_mentor || { name: "Dr. Sharma", email: "sharma@spit.ac.in" };
+            document.getElementById('mentor-assigned-name').innerText = mentor.name;
+            document.getElementById('mentor-assigned-email').innerText = mentor.email;
+
+            // Render comments log
+            commentsContainer.innerHTML = '';
+            const comments = progData.comments || [];
+            if (comments.length > 0) {
+                comments.forEach(c => {
+                    commentsContainer.innerHTML += `
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 10px 14px; border-radius: 8px; margin-bottom: 8px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-weight: 500;">
+                                <span style="color: var(--secondary);"><i class="fa-solid fa-user-tie"></i> ${c.faculty_name}</span>
+                                <span>${c.created_at}</span>
+                            </div>
+                            <div style="font-size: 13px; color: white; line-height: 1.4;">${c.comment_text}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                commentsContainer.innerHTML = `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:16px;">No feedback logs or progress queries recorded.</div>`;
+            }
+
+            if (!plan || plan.status !== 'approved' || !plan.student_summary || plan.student_summary === 'N/A') {
+                summaryText.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <i class="fa-solid fa-clock-rotate-left" style="font-size: 36px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+                    No active academic intervention has been assigned by your mentor (${mentor.name}) yet.
+                </div>`;
+                tasksContainer.innerHTML = '';
+                followupCard.style.display = 'none';
+                resourcesCard.style.display = 'none';
+                document.getElementById('mentor-progress-text').innerText = '0% Completed';
+                document.getElementById('mentor-progress-bar-fill').style.width = '0%';
+                return;
+            }
+            
+            summaryText.innerText = plan.student_summary;
+            
+            tasksContainer.innerHTML = '';
+            const mentorTasks = progData.mentor_tasks || [];
+            if (mentorTasks.length > 0) {
+                mentorTasks.forEach((task, index) => {
+                    const isCompleted = task.completed === 1 || task.completed === true;
+                    const item = document.createElement('div');
+                    item.className = 'timeline-item';
+                    if (isCompleted) {
+                        item.classList.add('task-completed');
+                    }
+                    item.innerHTML = `
+                        <div class="timeline-dot" style="background: var(--primary);"></div>
+                        <div class="timeline-meta" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <h3 class="timeline-title" style="${isCompleted ? 'text-decoration: line-through; color: var(--text-muted);' : ''}">${task.title}</h3>
+                                <div class="timeline-badges">
+                                    <span class="badge badge-duration" style="background: rgba(139, 92, 246, 0.1); color: var(--primary);"><i class="fa-solid fa-user-tie"></i> Assigned by ${mentor.name}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="mentor-task-chk-${index}" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);" 
+                                       ${isCompleted ? 'checked' : ''} 
+                                       onchange="toggleMentorTaskStatus('${progData.student_id}', ${index}, this.checked)">
+                                <label for="mentor-task-chk-${index}" style="font-size: 11px; color: var(--text-muted); cursor: pointer; user-select: none;">Completed</label>
+                            </div>
+                        </div>
+                    `;
+                    tasksContainer.appendChild(item);
+                });
+            } else {
+                tasksContainer.innerHTML = '<div style="color: var(--text-muted);">No action items assigned.</div>';
+            }
+            
+            const progress = progData.mentor_progress || { percentage: 0 };
+            document.getElementById('mentor-progress-text').innerText = `${progress.percentage}% Completed`;
+            document.getElementById('mentor-progress-bar-fill').style.width = `${progress.percentage}%`;
+            
+            if (plan.follow_up_plan) {
+                followupCard.style.display = 'block';
+                followupText.innerText = plan.follow_up_plan;
+            } else {
+                followupCard.style.display = 'none';
+            }
+            
+            resourcesContainer.innerHTML = '';
+            const resources = plan.recommended_resources || [];
+            if (resources.length > 0) {
+                resourcesCard.style.display = 'block';
+                resources.forEach(res => {
+                    const typeVal = (res.type || 'Course').trim();
+                    const typeClass = `badge-resource-${typeVal.toLowerCase().replace(' ', '_')}`;
+                    const card = document.createElement('div');
+                    card.className = 'resource-card';
+                    card.innerHTML = `
+                        <div>
+                            <span class="resource-badge ${typeClass}">${typeVal}</span>
+                            <h4 style="font-size: 14px; color: white; margin-bottom: 8px; font-weight:600;">${res.title}</h4>
+                            <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;">${res.description}</p>
+                        </div>
+                        <a href="${res.link}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--primary); text-decoration: none; font-weight: 600; transition: var(--transition);">
+                            Access Resource <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px;"></i>
+                        </a>
+                    `;
+                    resourcesContainer.appendChild(card);
+                });
+            } else {
+                resourcesCard.style.display = 'none';
+            }
+        }
+
+        // Toggle mentor task completion status
+        async function toggleMentorTaskStatus(studentId, index, completed) {
+            try {
+                const response = await fetch(`/api/students/${studentId}/mentor-tasks/${index}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ completed: completed })
+                });
+                if (!response.ok) {
+                    throw new Error("Failed to update mentor task progress on server.");
+                }
+                
+                const checkboxes = document.querySelectorAll('input[id^="mentor-task-chk-"]');
+                const total = checkboxes.length;
+                let completedCount = 0;
+                
+                checkboxes.forEach(cb => {
+                    const titleText = cb.closest('.timeline-item').querySelector('.timeline-title');
+                    if (cb.checked) {
+                        completedCount++;
+                        titleText.style.textDecoration = 'line-through';
+                        titleText.style.color = 'var(--text-muted)';
+                        cb.closest('.timeline-item').classList.add('task-completed');
+                    } else {
+                        titleText.style.textDecoration = 'none';
+                        titleText.style.color = 'white';
+                        cb.closest('.timeline-item').classList.remove('task-completed');
+                    }
+                });
+                
+                const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+                document.getElementById('mentor-progress-text').innerText = `${percent}% Completed`;
+                document.getElementById('mentor-progress-bar-fill').style.width = `${percent}%`;
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function toggleTaskStatus(studentId, index, completed) {
+            try {
+                const response = await fetch(`/api/students/${studentId}/tasks/${index}/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ completed: completed })
+                });
+                if (!response.ok) {
+                    throw new Error("Failed to update task progress on server.");
+                }
+                
+                const checkboxes = document.querySelectorAll('input[id^="task-chk-"]');
+                const total = checkboxes.length;
+                let completedCount = 0;
+                
+                checkboxes.forEach(cb => {
+                    const titleText = cb.closest('.timeline-item').querySelector('.timeline-title');
+                    const detailText = cb.closest('.timeline-item').querySelector('.timeline-detail');
+                    if (cb.checked) {
+                        completedCount++;
+                        titleText.style.textDecoration = 'line-through';
+                        titleText.style.color = 'var(--text-muted)';
+                        detailText.style.color = 'var(--text-muted)';
+                        cb.closest('.timeline-item').classList.add('task-completed');
+                    } else {
+                        titleText.style.textDecoration = 'none';
+                        titleText.style.color = 'white';
+                        detailText.style.color = '#d1d5db';
+                        cb.closest('.timeline-item').classList.remove('task-completed');
+                    }
+                });
+                
+                const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+                document.getElementById('progress-text').innerText = `${percent}% Completed`;
+                document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function lookupStudentProgress() {
+            const studentId = document.getElementById('mentor-search-id').value.trim();
+            if (!studentId) {
+                alert("Please enter a Student ID to track progress.");
+                return;
+            }
+            
+            const loader = document.getElementById('loader');
+            const title = document.getElementById('loader-title');
+            const subtitle = document.getElementById('loader-subtitle');
+            
+            loader.style.display = 'flex';
+            title.innerText = "Fetching Student Tracker...";
+            subtitle.innerText = "Retrieving progress metrics from database...";
+            
+            try {
+                const response = await fetch(`/api/students/${studentId}/progress`);
+                if (!response.ok) {
+                    throw new Error("Student ID not found in database.");
+                }
+                
+                const data = await response.json();
+                const payload = {
+                    name: data.name,
+                    student_id: data.student_id,
+                    preferred_roles: data.preferred_roles || [],
+                    preferred_locations: []
+                };
+                
+                const formattedData = {
+                    student_id: data.student_id,
+                    risk_profile: {
+                        risk_band: data.risk_profile.risk_band,
+                        risk_score: data.risk_profile.risk_score
+                    },
+                    placement_plan: {
+                        placement_plan: {
+                            readiness_summary: `Viewing active progress tracker for ${data.name}. This student has completed ${data.progress.completed} out of ${data.progress.total} tasks (${data.progress.percentage}% completed).`,
+                            company_comparison: "This represents the student's active roadmap. Checked tasks indicate student completion.",
+                            company_selection_guidance: "",
+                            preparation_steps: data.tasks,
+                            recommended_resources: data.resources,
+                            timeline: `Active timeline for ${data.name}.`,
+                            risk_factors_and_actions: [],
+                            data_verification_note: "Loaded from active SQLite database tracker."
+                        }
+                    }
+                };
+                
+                renderResults(formattedData, payload);
+                
+                let mentorBanner = document.getElementById('mentor-view-banner');
+                if (!mentorBanner) {
+                    mentorBanner = document.createElement('div');
+                    mentorBanner.id = 'mentor-view-banner';
+                    mentorBanner.style.background = 'rgba(139, 92, 246, 0.15)';
+                    mentorBanner.style.border = '1px solid var(--primary)';
+                    mentorBanner.style.color = 'white';
+                    mentorBanner.style.padding = '12px 20px';
+                    mentorBanner.style.borderRadius = '12px';
+                    mentorBanner.style.marginBottom = '20px';
+                    mentorBanner.style.fontSize = '14px';
+                    mentorBanner.style.fontWeight = '600';
+                    mentorBanner.style.display = 'flex';
+                    mentorBanner.style.justifyContent = 'space-between';
+                    mentorBanner.style.alignItems = 'center';
+                    
+                    const parent = document.getElementById('roadmap-container');
+                    parent.insertBefore(mentorBanner, parent.firstChild);
+                }
+                mentorBanner.innerHTML = `
+                    <span><i class="fa-solid fa-user-tie" style="color: var(--primary); margin-right: 8px;"></i> VIEWING MODE: Mentor tracking progress for <strong>${data.name}</strong> (${data.student_id})</span>
+                    <button onclick="resetForm()" style="background: transparent; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 10px; color: white; cursor: pointer; font-size: 11px;">Back to Form</button>
+                `;
+                
+                document.getElementById('form-container').style.display = 'none';
+                document.getElementById('roadmap-container').style.display = 'flex';
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+ 
+        // Reset and show form
+        function resetForm() {
+            document.getElementById('form-container').style.display = 'block';
+            document.getElementById('roadmap-container').style.display = 'none';
+            const banner = document.getElementById('mentor-view-banner');
+            if (banner) banner.remove();
+        }
+
+        // Login student by verifying database existence
+        async function loginStudent() {
+            const studentId = document.getElementById('login-student-id').value.trim();
+            const studentName = document.getElementById('login-student-name').value.trim();
+            
+            if (!studentId || !studentName) {
+                alert("Please enter both your Student ID and Full Name.");
+                return;
+            }
+            
+            const loader = document.getElementById('loader');
+            const title = document.getElementById('loader-title');
+            const subtitle = document.getElementById('loader-subtitle');
+            
+            loader.style.display = 'flex';
+            title.innerText = "Verifying Credentials...";
+            subtitle.innerText = "Checking student dataset records...";
+            
+            try {
+                const response = await fetch(`/api/students/${studentId}/progress`);
+                if (!response.ok) {
+                    throw new Error("Student ID not found in dataset. Please click 'Register Profile' to create a new profile.");
+                }
+                
+                const data = await response.json();
+                
+                // Formulate payload data
+                const payload = {
+                    name: data.name,
+                    student_id: data.student_id,
+                    preferred_roles: data.preferred_roles || [],
+                    preferred_locations: []
+                };
+                
+                const formattedData = {
+                    student_id: data.student_id,
+                    risk_profile: {
+                        risk_band: data.risk_profile.risk_band,
+                        risk_score: data.risk_profile.risk_score
+                    },
+                    placement_plan: {
+                        placement_plan: {
+                            readiness_summary: `Welcome back, ${data.name}. You have completed ${data.progress.completed} out of ${data.progress.total} tasks (${data.progress.percentage}% completed).`,
+                            company_comparison: "This represents your active roadmap dashboard. Toggle tasks to track completion.",
+                            company_selection_guidance: "",
+                            preparation_steps: data.tasks,
+                            recommended_resources: data.resources,
+                            timeline: `Active timeline for ${data.name}.`,
+                            risk_factors_and_actions: [],
+                            data_verification_note: "Loaded from student database record."
+                        }
+                    }
+                };
+                
+                renderResults(formattedData, payload);
+                
+                // Prefill the registration wizard form in case they click "Edit Details"
+                document.getElementById('student_id').value = data.student_id;
+                document.getElementById('name').value = data.name;
+                
+                // Toggle views
+                document.getElementById('student-login-container').style.display = 'none';
+                document.getElementById('roadmap-container').style.display = 'flex';
+                
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+        
+        // Show onboarding wizard form
+        function showRegistrationForm() {
+            document.getElementById('student-login-container').style.display = 'none';
+            document.getElementById('form-container').style.display = 'block';
+        }
+
+        // Logout student dashboard view
+        function logoutStudentPortal() {
+            document.getElementById('roadmap-container').style.display = 'none';
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('student-login-container').style.display = 'flex';
+            document.getElementById('login-student-id').value = '';
+            document.getElementById('login-student-name').value = '';
+        }
+
+        function goToFacultyDashboard() {
+            if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+                window.location.href = "http://" + window.location.hostname + ":8001";
+            } else {
+                window.location.href = "https://faculty-dashboard-e2ke.onrender.com";
+            }
+        }
+
+        // ── Mentor Dashboard Actions & Handlers ──
+        async function loadMentorStudentData(fromWelcome = false) {
+            let studentId = "";
+            if (fromWelcome) {
+                studentId = document.getElementById('mentor-student-search-id-welcome').value.trim();
+            } else {
+                studentId = document.getElementById('mentor-student-search-id').value.trim();
+            }
+
+            if (!studentId) {
+                alert("Please enter a student ID.");
+                return;
+            }
+
+            // Sync search inputs
+            document.getElementById('mentor-student-search-id-welcome').value = studentId;
+            document.getElementById('mentor-student-search-id').value = studentId;
+
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+            document.getElementById('loader-title').innerText = "Loading Student Risk Analysis...";
+            document.getElementById('loader-subtitle').innerText = `Consulting database and risk engine for ${studentId}...`;
+
+            try {
+                // Fetch student progress
+                const response = await fetch(`/api/students/${studentId}/progress`);
+                if (!response.ok) {
+                    throw new Error("Student ID not found in database. Please ask the student to submit details first.");
+                }
+                const progressData = await response.json();
+                currentMentorStudent = progressData;
+
+                // Show grid, hide welcome card
+                document.getElementById('mentor-welcome-card').style.display = 'none';
+                document.getElementById('mentor-dashboard-grid').style.display = 'grid';
+
+                // Render left column (Risk stats & profile)
+                document.getElementById('mentor-student-name').innerText = progressData.name || "N/A";
+                document.getElementById('mentor-student-id').innerText = progressData.student_id;
+                
+                const riskBand = (progressData.risk_profile.risk_band || "Low").toUpperCase();
+                const riskBadge = document.getElementById('mentor-risk-badge');
+                riskBadge.innerText = riskBand;
+                
+                // Color risk badge
+                riskBadge.className = 'badge';
+                if (riskBand === 'CRITICAL' || riskBand === 'HIGH') {
+                    riskBadge.classList.add('badge-primary'); // red
+                } else if (riskBand === 'MEDIUM') {
+                    riskBadge.classList.add('badge-secondary'); // yellow
+                } else {
+                    riskBadge.classList.add('badge-final-stage'); // green
+                }
+
+                // Risk score
+                const riskScoreVal = progressData.risk_profile.risk_score;
+                document.getElementById('mentor-risk-score').innerText = riskScoreVal !== undefined ? `${riskScoreVal.toFixed(1)}%` : "N/A";
+
+                // Fetch details of student profile to fill in cgpa, attendance, backlogs, fee delay
+                const studentProfileRes = await fetch(`/api/students/${studentId}`);
+                if (studentProfileRes.ok) {
+                    const profile = await studentProfileRes.json();
+                    document.getElementById('mentor-cgpa').innerText = profile.cgpa !== null ? profile.cgpa.toFixed(2) : "N/A";
+                    document.getElementById('mentor-attendance').innerText = profile.attendance_rate !== null ? `${profile.attendance_rate.toFixed(1)}%` : "N/A";
+                    document.getElementById('mentor-backlogs').innerText = profile.backlog_count !== null ? profile.backlog_count : "0";
+                    document.getElementById('mentor-fee-delay').innerText = profile.fee_delay_days !== null ? `${profile.fee_delay_days} days` : "0 days";
+                }
+
+                // Contributing Factors
+                const factorsList = document.getElementById('mentor-factors-list');
+                factorsList.innerHTML = "";
+                
+                let factors = [];
+                const attText = document.getElementById('mentor-attendance').innerText;
+                const cgpaText = document.getElementById('mentor-cgpa').innerText;
+                const backlogText = document.getElementById('mentor-backlogs').innerText;
+                const feeText = document.getElementById('mentor-fee-delay').innerText;
+                
+                if (parseFloat(attText) < 75.0) {
+                    factors.push({ feature: "attendance_rate", value: parseFloat(attText), importance: 0.35 });
+                }
+                if (parseFloat(cgpaText) < 7.0) {
+                    factors.push({ feature: "cgpa", value: parseFloat(cgpaText), importance: 0.28 });
+                }
+                if (parseInt(backlogText) > 0) {
+                    factors.push({ feature: "backlog_count", value: parseInt(backlogText), importance: 0.20 });
+                }
+                if (parseInt(feeText) > 0) {
+                    factors.push({ feature: "fee_delay_days", value: parseInt(feeText), importance: 0.15 });
+                }
+
+                if (factors.length === 0) {
+                    factorsList.innerHTML = `<div style="font-size: 13px; color: var(--success);"><i class="fa-regular fa-circle-check"></i> Student metrics are in healthy range.</div>`;
+                } else {
+                    factors.forEach(f => {
+                        const factorDiv = document.createElement('div');
+                        factorDiv.style.background = 'rgba(255,255,255,0.02)';
+                        factorDiv.style.border = '1px solid var(--border-color)';
+                        factorDiv.style.borderRadius = '6px';
+                        factorDiv.style.padding = '10px 14px';
+                        
+                        let labelName = f.feature.replace('_', ' ').toUpperCase();
+                        let metricVal = f.value;
+                        if (f.feature === 'attendance_rate') {
+                            labelName = "Low Attendance";
+                            metricVal = `${f.value}%`;
+                        } else if (f.feature === 'cgpa') {
+                            labelName = "Low CGPA";
+                        } else if (f.feature === 'backlog_count') {
+                            labelName = "Active Backlogs";
+                        } else if (f.feature === 'fee_delay_days') {
+                            labelName = "Fee Delay Days";
+                            metricVal = `${f.value} days`;
+                        }
+                        
+                        factorDiv.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; font-weight: 600;">
+                                <span style="color: #f87171;"><i class="fa-solid fa-triangle-exclamation"></i> ${labelName}</span>
+                                <span style="color: white;">${metricVal}</span>
+                            </div>
+                            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow:hidden;">
+                                <div style="background: #f87171; height: 100%; width: ${f.importance * 100}%;"></div>
+                            </div>
+                        `;
+                        factorsList.appendChild(factorDiv);
+                    });
+                }
+
+                // Render Tab A: Intervention
+                await renderMentorInterventionPanel(studentId);
+
+                // Render Tab B: Placement Checklist
+                renderMentorPlacementPanel(progressData);
+
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+                // Clear grid and show welcome
+                document.getElementById('mentor-welcome-card').style.display = 'block';
+                document.getElementById('mentor-dashboard-grid').style.display = 'none';
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        async function renderMentorInterventionPanel(studentId) {
+            const notGenPanel = document.getElementById('mentor-intervention-not-generated');
+            const genPanel = document.getElementById('mentor-intervention-generated');
+            
+            try {
+                const res = await fetch(`/api/students/${studentId}/interventions/latest`);
+                if (res.ok) {
+                    const plan = await res.json();
+                    if (plan) {
+                        currentIntervention = plan;
+                        notGenPanel.style.display = 'none';
+                        genPanel.style.display = 'block';
+                        
+                        // Render summary
+                        document.getElementById('mentor-intervention-summary').innerText = plan.student_summary || "No summary available.";
+                        
+                        // Render priority
+                        const priorityBadge = document.getElementById('mentor-intervention-priority');
+                        priorityBadge.innerText = (plan.priority_level || "Medium").toUpperCase();
+                        priorityBadge.className = 'badge';
+                        if (plan.priority_level === 'High' || plan.priority_level === 'Critical' || plan.priority_level === 'high' || plan.priority_level === 'critical') {
+                            priorityBadge.classList.add('badge-primary');
+                        } else if (plan.priority_level === 'Medium' || plan.priority_level === 'medium') {
+                            priorityBadge.classList.add('badge-secondary');
+                        } else {
+                            priorityBadge.classList.add('badge-final-stage');
+                        }
+                        
+                        // Render Actions
+                        const actionsList = document.getElementById('mentor-intervention-actions');
+                        actionsList.innerHTML = "";
+                        const actions = plan.recommended_actions || [];
+                        if (actions.length > 0) {
+                            actions.forEach((act, idx) => {
+                                const actDiv = document.createElement('div');
+                                actDiv.className = 'action-card';
+                                actDiv.innerHTML = `
+                                    <div class="action-card-num">${idx + 1}</div>
+                                    <div class="action-card-text">${act}</div>
+                                `;
+                                actionsList.appendChild(actDiv);
+                            });
+                        } else {
+                            actionsList.innerHTML = '<div style="color: var(--text-muted); font-size: 13px;">No recommendations listed.</div>';
+                        }
+                        
+                        // Follow-up
+                        document.getElementById('mentor-intervention-followup').innerText = plan.follow_up_plan || "No follow-up plan provided.";
+                        
+                        // Status Badge
+                        const statusBadge = document.getElementById('mentor-intervention-status-badge');
+                        const status = plan.status || 'pending_approval';
+                        statusBadge.innerText = status.replace('_', ' ').toUpperCase();
+                        statusBadge.className = 'badge';
+                        if (status === 'approved') {
+                            statusBadge.classList.add('badge-final-stage');
+                            document.getElementById('mentor-approval-actions').style.display = 'none';
+                            
+                            // Format stamp
+                            const approvedDate = plan.approved_at ? new Date(plan.approved_at).toLocaleString() : 'N/A';
+                            document.getElementById('mentor-approval-stamp').innerHTML = `
+                                Approved by: <strong>${plan.approved_by || 'Mentor'}</strong><br/>
+                                <span style="font-size: 10px; color: var(--text-muted);">${approvedDate}</span>
+                            `;
+                        } else if (status === 'rejected') {
+                            statusBadge.classList.add('badge-primary');
+                            document.getElementById('mentor-approval-actions').style.display = 'none';
+                            document.getElementById('mentor-approval-stamp').innerHTML = `<span style="color: #f87171; font-weight: 600;">REJECTED BY FACULTY</span>`;
+                        } else {
+                            statusBadge.classList.add('badge-secondary');
+                            document.getElementById('mentor-approval-actions').style.display = 'block';
+                            document.getElementById('mentor-approval-stamp').innerHTML = `<em>Review Required</em>`;
+                        }
+                        
+                        // Mock resources retrieved (RAG)
+                        const ragSources = document.getElementById('mentor-intervention-rag-sources');
+                        ragSources.innerHTML = "";
+                        const mockDocs = ["attendance_policy.md", "counselling.md", "financial_assistance.md", "scholarship.md", "tutoring.md"];
+                        
+                        let selectedDocs = [];
+                        const attText = document.getElementById('mentor-attendance').innerText;
+                        const cgpaText = document.getElementById('mentor-cgpa').innerText;
+                        const feeText = document.getElementById('mentor-fee-delay').innerText;
+
+                        if (parseFloat(attText) < 75.0) {
+                            selectedDocs.push("attendance_policy.md", "tutoring.md");
+                        }
+                        if (parseFloat(cgpaText) < 7.0) {
+                            selectedDocs.push("tutoring.md", "counselling.md");
+                        }
+                        if (parseInt(feeText) > 0) {
+                            selectedDocs.push("financial_assistance.md", "scholarship.md");
+                        }
+                        if (selectedDocs.length === 0) {
+                            selectedDocs.push("tutoring.md");
+                        }
+                        
+                        [...new Set(selectedDocs)].forEach(doc => {
+                            const tag = document.createElement('span');
+                            tag.className = 'rag-source-tag';
+                            tag.innerHTML = `<i class="fa-solid fa-file-lines"></i> ${doc}`;
+                            ragSources.appendChild(tag);
+                        });
+
+                        // Mock tools ran in LangGraph
+                        const toolsRan = document.getElementById('mentor-intervention-tools-ran');
+                        toolsRan.innerHTML = "";
+                        const mockTools = ["get_risk_profile", "check_scholarship_eligibility", "search_support_resources", "draft_intervention_plan"];
+                        mockTools.forEach(t => {
+                            const tag = document.createElement('span');
+                            tag.className = 'tool-run-tag';
+                            tag.innerHTML = `<i class="fa-solid fa-square-check"></i> ${t}`;
+                            toolsRan.appendChild(tag);
+                        });
+                        
+                        return;
+                    }
+                }
+                
+                notGenPanel.style.display = 'block';
+                genPanel.style.display = 'none';
+            } catch (err) {
+                console.error("Error reading intervention plan:", err);
+                notGenPanel.style.display = 'block';
+                genPanel.style.display = 'none';
+            }
+        }
+
+        async function generateMentorIntervention() {
+            if (!currentMentorStudent) return;
+            const studentId = currentMentorStudent.student_id;
+            
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+            document.getElementById('loader-title').innerText = "Orchestrating LangGraph Workflow...";
+            document.getElementById('loader-subtitle').innerText = "Invoking Risk Router, Scholarship Node, RAG ChromaDB Retrieval, and Gemini Planner...";
+            
+            try {
+                const response = await fetch('/api/interventions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_id: studentId })
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Failed to invoke backend LangGraph workflow.");
+                }
+                
+                await renderMentorInterventionPanel(studentId);
+                
+            } catch (err) {
+                alert(`Error generating intervention: ${err.message}`);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        async function approveMentorIntervention() {
+            if (!currentIntervention) return;
+            
+            const facultyName = prompt("Please enter your name/signature for approval record:");
+            if (!facultyName || !facultyName.trim()) {
+                alert("Faculty name is required to approve the plan.");
+                return;
+            }
+            
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+            document.getElementById('loader-title').innerText = "Recording Approval...";
+            document.getElementById('loader-subtitle').innerText = "Updating SQLite database record...";
+            
+            try {
+                const response = await fetch(`/api/interventions/${currentIntervention.intervention_id}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ approved_by: facultyName.trim() })
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Failed to submit approval.");
+                }
+                
+                await renderMentorInterventionPanel(currentMentorStudent.student_id);
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        async function rejectMentorIntervention() {
+            if (!currentIntervention) return;
+            if (!confirm("Are you sure you want to reject this intervention recommendation?")) return;
+            
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+            document.getElementById('loader-title').innerText = "Recording Rejection...";
+            document.getElementById('loader-subtitle').innerText = "Updating SQLite database record...";
+            
+            try {
+                const response = await fetch(`/api/interventions/${currentIntervention.intervention_id}/reject`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Failed to submit rejection.");
+                }
+                
+                await renderMentorInterventionPanel(currentMentorStudent.student_id);
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function renderMentorPlacementPanel(progressData) {
+            const notAvail = document.getElementById('mentor-placement-not-available');
+            const avail = document.getElementById('mentor-placement-available');
+            
+            const tasks = progressData.tasks || [];
+            const resources = progressData.resources || [];
+            
+            if (tasks.length === 0) {
+                notAvail.style.display = 'block';
+                avail.style.display = 'none';
+                return;
+            }
+            
+            notAvail.style.display = 'none';
+            avail.style.display = 'block';
+            
+            const pct = progressData.progress.percentage;
+            document.getElementById('mentor-placement-percent').innerText = `${pct}% Tasks Completed (${progressData.progress.completed}/${progressData.progress.total})`;
+            document.getElementById('mentor-placement-progressbar').style.width = `${pct}%`;
+            
+            const taskContainer = document.getElementById('mentor-placement-tasks');
+            taskContainer.innerHTML = "";
+            tasks.forEach((t, idx) => {
+                const tDiv = document.createElement('div');
+                tDiv.style.background = 'rgba(255,255,255,0.02)';
+                tDiv.style.border = '1px solid var(--border-color)';
+                tDiv.style.borderRadius = '6px';
+                tDiv.style.padding = '8px 12px';
+                tDiv.style.display = 'flex';
+                tDiv.style.justifyContent = 'space-between';
+                tDiv.style.alignItems = 'center';
+                
+                const isCompleted = t.completed === 1 || t.completed === true;
+                const completedBadge = isCompleted ? 
+                    `<span class="badge badge-final-stage"><i class="fa-solid fa-circle-check"></i> Done</span>` : 
+                    `<span class="badge badge-secondary"><i class="fa-regular fa-clock"></i> Pending</span>`;
+                    
+                tDiv.innerHTML = `
+                    <div style="font-size:12px; color: ${isCompleted ? 'var(--text-muted)' : 'white'}; text-decoration: ${isCompleted ? 'line-through' : 'none'};">${t.title}</div>
+                    <div>${completedBadge}</div>
+                `;
+                taskContainer.appendChild(tDiv);
+            });
+            
+            const resContainer = document.getElementById('mentor-placement-resources');
+            resContainer.innerHTML = "";
+            if (resources.length > 0) {
+                resources.forEach(r => {
+                    const rDiv = document.createElement('div');
+                    rDiv.style.background = 'rgba(255,255,255,0.02)';
+                    rDiv.style.border = '1px solid var(--border-color)';
+                    rDiv.style.borderRadius = '6px';
+                    rDiv.style.padding = '8px 12px';
+                    rDiv.style.fontSize = '12px';
+                    
+                    const typeVal = r.type || 'Course';
+                    const typeClass = `badge-resource-${typeVal.toLowerCase().replace(' ', '_')}`;
+                    
+                    rDiv.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span class="resource-badge ${typeClass}" style="margin-bottom:0; font-size:9px;">${typeVal}</span>
+                        </div>
+                        <div style="font-weight:600; color:white; margin-bottom:2px;">${r.title}</div>
+                        <p style="font-size:11px; color:var(--text-muted); line-height:1.4;">${r.description}</p>
+                    `;
+                    resContainer.appendChild(rDiv);
+                });
+            } else {
+                resContainer.innerHTML = '<div style="color:var(--text-muted); font-size:12px;">No custom resources generated.</div>';
+            }
+        }
+
+        let mentorStudentsList = [];
+
+        async function loadMentorStudentsList() {
+            try {
+                const response = await fetch('/api/students');
+                if (response.ok) {
+                    mentorStudentsList = await response.json();
+                    renderMentorStudentsList(mentorStudentsList);
+                }
+            } catch (err) {
+                console.error("Error loading students list:", err);
+            }
+        }
+
+        function renderMentorStudentsList(list) {
+            const container = document.getElementById('mentor-sidebar-list');
+            if (!container) return;
+            
+            if (list.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px;">No students found.</div>`;
+                return;
+            }
+
+            // Slice to first 100 to avoid any rendering lag in the list
+            const displayed = list.slice(0, 100);
+
+            container.innerHTML = displayed.map(s => {
+                const riskClass = `badge-${(s.risk_band || 'low').toLowerCase()}`;
+                const newlyActiveTag = s.is_newly_active ? `<span class="badge badge-primary" style="font-size:9px; padding:2px 6px;">NEW</span>` : '';
+                return `
+                    <div class="mentor-sidebar-item" id="sidebar-stu-${s.student_id}" onclick="selectSidebarStudent('${s.student_id}')">
+                        <div class="mentor-sidebar-item-header">
+                            <span class="mentor-sidebar-name">${s.name}</span>
+                            ${newlyActiveTag}
+                        </div>
+                        <div class="mentor-sidebar-item-header" style="margin-top: 4px;">
+                            <span class="mentor-sidebar-id">${s.student_id}</span>
+                            <span class="badge ${riskClass}" style="font-size: 9px; padding: 2px 6px;">${s.risk_band}</span>
+                        </div>
+                        <div class="mentor-sidebar-meta" style="margin-top: 4px;">
+                            <span style="font-size: 10px; color: var(--text-muted);">${s.current_year || ''}</span>
+                            <span style="font-size: 10px; color: var(--text-muted);">${s.department || ''}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            if (list.length > 100) {
+                container.innerHTML += `
+                    <div style="text-align: center; font-size: 11px; color: var(--text-muted); padding: 8px 0; border-top: 1px dashed rgba(255,255,255,0.05);">
+                        Showing top 100 of ${list.length}. Use search to find others.
+                    </div>
+                `;
+            }
+        }
+
+        function filterMentorSidebar() {
+            const query = document.getElementById('mentor-sidebar-search').value.toLowerCase().trim();
+            const filtered = mentorStudentsList.filter(s => 
+                s.name.toLowerCase().includes(query) || 
+                s.student_id.toLowerCase().includes(query)
+            );
+            renderMentorStudentsList(filtered);
+        }
+
+        function selectSidebarStudent(studentId) {
+            // Highlight item
+            document.querySelectorAll('.mentor-sidebar-item').forEach(el => el.classList.remove('active'));
+            const selectedItem = document.getElementById(`sidebar-stu-${studentId}`);
+            if (selectedItem) selectedItem.classList.add('active');
+            
+            // Set input and load
+            document.getElementById('mentor-student-search-id-welcome').value = studentId;
+            document.getElementById('mentor-student-search-id').value = studentId;
+            loadMentorStudentData(true);
+        }
+
+        function openAddStudentModal() {
+            document.getElementById('add-student-modal').style.display = 'flex';
+        }
+
+        function closeAddStudentModal() {
+            document.getElementById('add-student-modal').style.display = 'none';
+            document.getElementById('add-student-form').reset();
+        }
+
+        async function submitAddStudent(e) {
+            e.preventDefault();
+            const studentId = document.getElementById('add-student-id').value.trim();
+            const name = document.getElementById('add-student-name').value.trim();
+            const department = document.getElementById('add-student-dept').value;
+            const currentYear = document.getElementById('add-student-year').value;
+
+            const payload = {
+                student_id: studentId,
+                name: name,
+                department: department,
+                current_year: currentYear,
+                added_by_mentor: true,
+                cgpa: 8.0,
+                attendance_rate: 85.0,
+                backlog_count: 0,
+                fee_delay_days: 0,
+                target_companies: ["tcs"]
+            };
+
+            const loader = document.getElementById('loader');
+            loader.style.display = 'flex';
+            document.getElementById('loader-title').innerText = "Registering Student...";
+            document.getElementById('loader-subtitle').innerText = "Adding profile to SQLite database...";
+
+            try {
+                const saveRes = await fetch('/api/students', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (saveRes.ok) {
+                    closeAddStudentModal();
+                    await loadMentorStudentsList();
+                    selectSidebarStudent(studentId);
+                } else {
+                    const errData = await saveRes.json();
+                    alert(`Failed to add student: ${errData.detail || "Unknown error"}`);
+                }
+            } catch (err) {
+                alert(`Error registering student: ${err.message}`);
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+
+    <!-- ── ADD STUDENT MODAL ── -->
+    <div id="add-student-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: white; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-user-plus" style="color: var(--primary);"></i> Add New Student Profile
+            </h3>
+            <form id="add-student-form" onsubmit="submitAddStudent(event)">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="add-student-id" style="font-size: 12px;">Student ID</label>
+                    <input type="text" id="add-student-id" placeholder="e.g. STU202630001" required style="width:100%; background: rgba(31, 41, 55, 0.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; color: white; margin-top: 4px; outline: none;">
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="add-student-name" style="font-size: 12px;">Full Name</label>
+                    <input type="text" id="add-student-name" placeholder="e.g. Rahul Sharma" required style="width:100%; background: rgba(31, 41, 55, 0.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; color: white; margin-top: 4px; outline: none;">
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="add-student-dept" style="font-size: 12px;">Department</label>
+                    <select id="add-student-dept" style="width:100%; background: rgba(31, 41, 55, 0.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; color: white; margin-top: 4px; outline: none; box-sizing: border-box;">
+                        <option value="Computer Engineering">Computer Engineering</option>
+                        <option value="Civil Engineering">Civil Engineering</option>
+                        <option value="AI & ML">AI & ML</option>
+                        <option value="Electronics & Telecommunication">Electronics & Telecommunication</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Mechanical Engineering">Mechanical Engineering</option>
+                        <option value="Electrical Engineering">Electrical Engineering</option>
+                        <option value="Chemical Engineering">Chemical Engineering</option>
+                        <option value="Electronics & Computer Science">Electronics & Computer Science</option>
+                        <option value="Instrumentation Engineering">Instrumentation Engineering</option>
+                        <option value="Data Science">Data Science</option>
+                        <option value="Cyber Security">Cyber Security</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label for="add-student-year" style="font-size: 12px;">Current Year</label>
+                    <select id="add-student-year" style="width:100%; background: rgba(31, 41, 55, 0.5); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; color: white; margin-top: 4px; outline: none; box-sizing: border-box;">
+                        <option value="First Year">First Year</option>
+                        <option value="Second Year">Second Year</option>
+                        <option value="Third Year">Third Year</option>
+                        <option value="Final Year">Final Year</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" onclick="closeAddStudentModal()" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 16px; border-radius: 6px; cursor: pointer;">Cancel</button>
+                    <button type="submit" style="background: var(--primary); border: none; color: white; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">Add Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
