@@ -48,9 +48,10 @@ class PostgresCursorWrapper:
         self.cursor.execute(query, params or ())
 
     def executemany(self, query, params_seq):
+        from psycopg2.extras import execute_batch
         query = query.replace('?', '%s')
         query = query.replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY')
-        self.cursor.executemany(query, params_seq)
+        execute_batch(self.cursor, query, params_seq)
         
     def fetchone(self):
         return self.cursor.fetchone()
