@@ -206,17 +206,24 @@ def init_db():
         department TEXT
     )
     """)
+    conn.commit()
+    
     # Migration helper to add recommended_resources column if table existed prior
     try:
         cursor.execute("ALTER TABLE intervention_reports ADD COLUMN recommended_resources TEXT")
+        conn.commit()
     except Exception:
-        pass
+        if IS_POSTGRES:
+            conn.rollback()
+            
     # Migration helper to add assigned_faculty_email to students table
     try:
         cursor.execute("ALTER TABLE students ADD COLUMN assigned_faculty_email TEXT")
+        conn.commit()
     except Exception:
-        pass
-    conn.commit()
+        if IS_POSTGRES:
+            conn.rollback()
+            
     conn.close()
 
 
