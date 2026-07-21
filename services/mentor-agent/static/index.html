@@ -3247,6 +3247,14 @@
             document.getElementById('login-student-name').value = '';
         }
 
+        function goToFacultyDashboard() {
+            if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+                window.location.href = "http://" + window.location.hostname + ":8001";
+            } else {
+                window.location.href = "https://faculty-dashboard-e2ke.onrender.com";
+            }
+        }
+
         // ── Mentor Dashboard Actions & Handlers ──
         async function loadMentorStudentData(fromWelcome = false) {
             let studentId = "";
