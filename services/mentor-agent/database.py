@@ -605,7 +605,15 @@ def approve_intervention(intervention_id: int, faculty_name: str):
         is_synthetic = student_email and (student_email.endswith("@example.com") or student_email.endswith("@synthetic.com"))
         email_sent = False
         if student_email and not is_synthetic:
-            email_sent = send_outreach_email(student_email, student_name, faculty_name, actions)
+            # Send email in a background thread so the dashboard approval remains instant and non-blocking
+            import threading
+            def bg_send():
+                try:
+                    send_outreach_email(student_email, student_name, faculty_name, actions)
+                except Exception as thread_e:
+                    print(f"Error in background outreach email dispatch: {thread_e}")
+            threading.Thread(target=bg_send, daemon=True).start()
+            email_sent = True
             
         outreach_status = "Real email dispatched." if email_sent else "Logged to outreach log (Mock Mode)."
         outreach_text = (
