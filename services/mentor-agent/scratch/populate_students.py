@@ -109,13 +109,18 @@ def populate_from_csv(csv_path: str):
             department = row.get('department')
             current_year = row.get('current_year')
             
+            # Synthetic contact details
+            synth_email = f"{student_id.lower()}@example.com"
+            synth_phone = f"+9198765{random.randint(10000, 99999)}"
+
             students_data.append((
                 student_id, name, cgpa, backlog_count, attendance_rate, internal_marks_avg, gpa_trend,
                 assignment_submission_rate, lms_login_frequency, hackathon_count, weekly_study_hours,
                 time_management_score, coding_score, ai_ml_score, communication_score, teamwork_score,
                 presentation_score, internship_count, completed_certifications, fee_delay_days,
                 financial_stress_score, target_companies, preferred_roles, preferred_locations,
-                min_ctc, company_types, max_bond_years, work_mode, department, current_year, 0, 0
+                min_ctc, company_types, max_bond_years, work_mode, department, current_year, 0, 0,
+                synth_email, synth_phone
             ))
             
             # Parse risks
@@ -146,9 +151,10 @@ def populate_from_csv(csv_path: str):
             time_management_score, coding_score, ai_ml_score, communication_score, teamwork_score,
             presentation_score, internship_count, completed_certifications, fee_delay_days,
             financial_stress_score, target_companies, preferred_roles, preferred_locations,
-            min_ctc, company_types, max_bond_years, work_mode, department, current_year, is_newly_active, added_by_mentor
+            min_ctc, company_types, max_bond_years, work_mode, department, current_year, is_newly_active, added_by_mentor,
+            email, phone
         ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     """, students_data)
     
