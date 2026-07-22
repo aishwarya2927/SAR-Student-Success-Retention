@@ -111,7 +111,9 @@ def init_db():
         department TEXT,
         current_year TEXT,
         is_newly_active INTEGER DEFAULT 0,
-        added_by_mentor INTEGER DEFAULT 0
+        added_by_mentor INTEGER DEFAULT 0,
+        email TEXT,
+        phone TEXT
     )
     """)
     cursor.execute("""
@@ -206,6 +208,17 @@ def init_db():
         department TEXT
     )
     """)
+    # Student chat log history table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS student_chat_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id TEXT NOT NULL,
+        sender TEXT NOT NULL,
+        message TEXT NOT NULL,
+        timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(student_id)
+    )
+    """)
     conn.commit()
     
     # Migration helper to add recommended_resources column if table existed prior
@@ -219,6 +232,22 @@ def init_db():
     # Migration helper to add assigned_faculty_email to students table
     try:
         cursor.execute("ALTER TABLE students ADD COLUMN assigned_faculty_email TEXT")
+        conn.commit()
+    except Exception:
+        if IS_POSTGRES:
+            conn.rollback()
+            
+    # Migration helper to add email to students table
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN email TEXT")
+        conn.commit()
+    except Exception:
+        if IS_POSTGRES:
+            conn.rollback()
+
+    # Migration helper to add phone to students table
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN phone TEXT")
         conn.commit()
     except Exception:
         if IS_POSTGRES:
@@ -247,9 +276,9 @@ def save_student(data: dict):
         presentation_score, internship_count, completed_certifications, fee_delay_days,
         financial_stress_score, target_companies, preferred_roles, preferred_locations,
         min_ctc, company_types, max_bond_years, work_mode,
-        department, current_year, is_newly_active, added_by_mentor
+        department, current_year, is_newly_active, added_by_mentor, email, phone
     ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     )
     ON CONFLICT(student_id) DO UPDATE SET
         name=excluded.name,
@@ -282,7 +311,9 @@ def save_student(data: dict):
         department=excluded.department,
         current_year=excluded.current_year,
         is_newly_active=excluded.is_newly_active,
-        added_by_mentor=excluded.added_by_mentor
+        added_by_mentor=excluded.added_by_mentor,
+        email=excluded.email,
+        phone=excluded.phone
     """, (
         data.get("student_id"),
         data.get("name"),
@@ -315,7 +346,9 @@ def save_student(data: dict):
         data.get("department"),
         data.get("current_year"),
         data.get("is_newly_active", 0),
-        data.get("added_by_mentor", 0)
+        data.get("added_by_mentor", 0),
+        data.get("email"),
+        data.get("phone")
     ))
     conn.commit()
     conn.close()
@@ -465,6 +498,85 @@ def insert_intervention(student_id: str, plan: dict) -> int:
     conn.close()
     return new_id
 
+def send_outreach_email(student_email: str, student_name: str, faculty_name: str, actions: list[str]) -> bool:
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = os.getenv("SMTP_PORT")
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    sender_email = os.getenv("SENDER_EMAIL", "successpath-alerts@spit.ac.in")
+    
+    if smtp_password:
+        if "#" in smtp_password:
+            smtp_password = smtp_password.split("#")[0]
+        smtp_password = smtp_password.replace(" ", "").strip()
+        
+    if not all([smtp_host, smtp_port, smtp_user, smtp_password]):
+        return False
+        
+    try:
+        # Create message container
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"Academic Intervention Plan Approved - SuccessPath"
+        msg['From'] = sender_email
+        msg['To'] = student_email
+        
+        # Build styled HTML body
+        actions_li = "".join(f"<li>{action}</li>" for action in actions)
+        
+        html = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; border: 1px solid #dddddd; padding: 20px; border-radius: 8px;">
+            <div style="text-align: center; border-bottom: 2px solid #06b6d4; padding-bottom: 12px; margin-bottom: 20px;">
+              <h2 style="color: #06b6d4; margin: 0;">SuccessPath Onboarding & Outreach</h2>
+              <p style="font-size: 12px; color: #666666; margin: 4px 0 0 0;">SPIT Student Success & Retention Platform</p>
+            </div>
+            
+            <p>Dear <strong>{student_name}</strong>,</p>
+            
+            <p>We are writing to let you know that your academic advisor, <strong>{faculty_name}</strong>, has reviewed and approved your AI Academic Intervention Plan.</p>
+            
+            <div style="background-color: #f9fafb; border-left: 4px solid #06b6d4; padding: 12px; margin: 18px 0; border-radius: 4px;">
+              <h4 style="margin: 0 0 8px 0; color: #111827;">Your Mentor-Assigned Tasks & Action Items:</h4>
+              <ul style="margin: 0; padding-left: 20px;">
+                {actions_li}
+              </ul>
+            </div>
+            
+            <p>To support you in resolving these action items and ensuring your academic progress, a counselling session has been scheduled for you. Please click the button below to view availability and confirm your support appointment:</p>
+            
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="https://calendly.com/spit-success/counselling" style="background-color: #06b6d4; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-block; box-shadow: 0 4px 6px rgba(6, 182, 212, 0.2);">Book Counselling Session</a>
+            </div>
+            
+            <p style="font-size: 13px; color: #666666;">
+              Please log in to your <a href="http://localhost:8000" style="color: #06b6d4; text-decoration: none; font-weight: bold;">SuccessPath Portal</a> to update your task completion checklist and access recommended learning materials.
+            </p>
+            
+            <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 24px 0;" />
+            <p style="font-size: 11px; color: #999999; text-align: center; margin: 0;">
+              This is an automated notification from the SPIT SuccessPath system. Please do not reply directly to this email.
+            </p>
+          </body>
+        </html>
+        """
+        
+        msg.attach(MIMEText(html, 'html'))
+        
+        # Connect to SMTP server and send email
+        server = smtplib.SMTP(smtp_host, int(smtp_port))
+        server.starttls()
+        server.login(smtp_user, smtp_password)
+        server.sendmail(sender_email, student_email, msg.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error dispatching outreach email: {e}")
+        return False
+
 def approve_intervention(intervention_id: int, faculty_name: str):
     import datetime
     conn = get_connection()
@@ -481,6 +593,47 @@ def approve_intervention(intervention_id: int, faculty_name: str):
         except Exception:
             actions = []
         save_mentor_tasks(student_id, actions)
+        
+        # Query student details for name, email and phone
+        cursor.execute("SELECT name, email, phone FROM students WHERE student_id = ?", (student_id,))
+        student_row = cursor.fetchone()
+        student_name = student_row["name"] if student_row else "Student"
+        student_email = student_row["email"] if student_row else None
+        student_phone = student_row["phone"] if student_row else None
+        
+        # Check if we should send a real email
+        is_synthetic = student_email and (student_email.endswith("@example.com") or student_email.endswith("@synthetic.com"))
+        email_sent = False
+        if student_email and not is_synthetic:
+            email_sent = send_outreach_email(student_email, student_name, faculty_name, actions)
+            
+        outreach_status = "Real email dispatched." if email_sent else "Logged to outreach log (Mock Mode)."
+        outreach_text = (
+            f"[SYSTEM OUTREACH] Automated intervention notification sent to student. "
+            f"Status: {outreach_status}. "
+            f"Scheduled counselling support booking link: https://calendly.com/spit-success/counselling"
+        )
+        cursor.execute("""
+            INSERT INTO dashboard_comments (student_id, faculty_name, comment_text, created_at)
+            VALUES (?, 'System Outreach Agent', ?, ?)
+        """, (student_id, outreach_text, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        
+        # Log to file
+        log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outreach_notifications.log")
+        try:
+            with open(log_path, "a", encoding="utf-8") as log_f:
+                log_f.write(
+                    f"--- Outreach Event: {datetime.datetime.now().isoformat()} ---\n"
+                    f"To Student ID: {student_id} ({student_name})\n"
+                    f"Email: {student_email} (Sent: {email_sent})\n"
+                    f"Phone: {student_phone}\n"
+                    f"Approving Faculty: {faculty_name}\n"
+                    f"Actions: {', '.join(actions)}\n"
+                    f"Counselling Booking Link: https://calendly.com/spit-success/counselling\n"
+                    f"---------------------------------------------------\n\n"
+                )
+        except Exception as e:
+            print(f"Error writing mock email log: {e}")
         
     cursor.execute("""
     UPDATE intervention_reports
@@ -606,6 +759,34 @@ def update_intervention(intervention_id: int, plan: dict):
         conn.commit()
     finally:
         conn.close()
+
+def save_chat_log(student_id: str, sender: str, message: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO student_chat_logs (student_id, sender, message)
+        VALUES (?, ?, ?)
+    """, (student_id, sender, message))
+    conn.commit()
+    conn.close()
+
+def get_chat_logs(student_id: str) -> list[dict]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT sender, message, timestamp FROM student_chat_logs
+        WHERE student_id = ? ORDER BY id ASC
+    """, (student_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+def clear_chat_logs(student_id: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM student_chat_logs WHERE student_id = ?", (student_id,))
+    conn.commit()
+    conn.close()
 
 # Initialize DB on import/start
 init_db()

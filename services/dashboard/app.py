@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -134,7 +134,9 @@ def init_db():
         current_year TEXT,
         is_newly_active INTEGER DEFAULT 0,
         added_by_mentor INTEGER DEFAULT 0,
-        assigned_faculty_email TEXT
+        assigned_faculty_email TEXT,
+        email TEXT,
+        phone TEXT
     )
     """)
 
@@ -927,6 +929,96 @@ async def proxy_edit_intervention(intervention_id: int, req: EditInterventionReq
             return response.json()
     except httpx.RequestError as e:
         logger.error(f"Failed to edit intervention: {e}")
+        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+@app.post("/api/students/{student_id}/verify-resume")
+async def proxy_verify_resume(student_id: str, file: UploadFile = File(...)):
+    try:
+        async with httpx.AsyncClient() as client:
+            file_bytes = await file.read()
+            files = {"file": (file.filename, file_bytes, file.content_type)}
+            response = await client.post(
+                f"{MENTOR_AGENT_URL}/api/students/{student_id}/verify-resume",
+                files=files,
+                timeout=120
+            )
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+            return response.json()
+    except httpx.RequestError as e:
+        logger.error(f"Failed to proxy verify resume: {e}")
+        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+
+@app.post("/api/students/{student_id}/verify-certificate")
+async def proxy_verify_certificate(student_id: str, file: UploadFile = File(...), task_index: Optional[int] = None):
+    try:
+        async with httpx.AsyncClient() as client:
+            file_bytes = await file.read()
+            files = {"file": (file.filename, file_bytes, file.content_type)}
+            params = {}
+            if task_index is not None:
+                params["task_index"] = task_index
+            response = await client.post(
+                f"{MENTOR_AGENT_URL}/api/students/{student_id}/verify-certificate",
+                files=files,
+                params=params,
+                timeout=120
+            )
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+            return response.json()
+    except httpx.RequestError as e:
+        logger.error(f"Failed to proxy verify certificate: {e}")
+        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+
+@app.get("/api/students/{student_id}/chat")
+async def proxy_get_chat(student_id: str):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{MENTOR_AGENT_URL}/api/students/{student_id}/chat",
+                timeout=30
+            )
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+            return response.json()
+    except httpx.RequestError as e:
+        logger.error(f"Failed to proxy get chat: {e}")
+        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+
+@app.post("/api/students/{student_id}/chat")
+async def proxy_post_chat(student_id: str, req: ChatRequest):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{MENTOR_AGENT_URL}/api/students/{student_id}/chat",
+                json=req.dict(),
+                timeout=60
+            )
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+            return response.json()
+    except httpx.RequestError as e:
+        logger.error(f"Failed to proxy post chat: {e}")
+        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+
+@app.post("/api/students/{student_id}/chat/clear")
+async def proxy_clear_chat(student_id: str):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{MENTOR_AGENT_URL}/api/students/{student_id}/chat/clear",
+                timeout=30
+            )
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+            return response.json()
+    except httpx.RequestError as e:
+        logger.error(f"Failed to proxy clear chat: {e}")
         raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
 
 

@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import os
+import json
 import logging
 from dotenv import load_dotenv
 
@@ -26,8 +27,12 @@ from database import (
     insert_intervention,
     approve_intervention,
     reject_intervention,
-    get_latest_intervention
+    get_latest_intervention,
+    save_chat_log,
+    get_chat_logs,
+    clear_chat_logs
 )
+from tools.chat_agent import process_student_chat
 
 
 logging.basicConfig(level=logging.INFO)
@@ -127,6 +132,8 @@ class StudentProfileModel(BaseModel):
     department: Optional[str] = None
     current_year: Optional[str] = None
     added_by_mentor: Optional[bool] = False
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 
 # ── Expose Static Files & Dashboard Root ──────────────────────────────────────
@@ -593,6 +600,8 @@ def get_student_progress(student_id: str):
     return {
         "student_id": student_id,
         "name": student.get("name"),
+        "email": student.get("email"),
+        "phone": student.get("phone"),
         "target_companies": student.get("target_companies", []),
         "preferred_roles": student.get("preferred_roles", []),
         "tasks": tasks,
@@ -636,6 +645,342 @@ def get_policy(policy_name: str):
         return {"policy_name": safe_name, "content": content}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+@app.get("/api/students/{student_id}/chat")
+def get_chat_history_endpoint(student_id: str):
+    """
+    Returns the student chat history.
+    """
+    try:
+        logs = get_chat_logs(student_id)
+        return logs
+    except Exception as e:
+        logger.error(f"Error fetching chat logs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/students/{student_id}/chat")
+async def chat_with_agent_endpoint(student_id: str, req: ChatRequest):
+    """
+    Submits a student message to the AI agent and returns the reply.
+    """
+    try:
+        history = get_chat_logs(student_id)
+        save_chat_log(student_id, "student", req.message)
+        reply = process_student_chat(student_id, req.message, history)
+        save_chat_log(student_id, "agent", reply)
+        return {"response": reply}
+    except Exception as e:
+        logger.error(f"Error in chat agent: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/students/{student_id}/chat/clear")
+def clear_chat_history_endpoint(student_id: str):
+    """
+    Clears the student chat history.
+    """
+    try:
+        clear_chat_logs(student_id)
+        return {"status": "success", "message": "Chat history cleared."}
+    except Exception as e:
+        logger.error(f"Error clearing chat logs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/students/{student_id}/verify-resume")
+async def verify_resume_endpoint(student_id: str, file: UploadFile = File(...)):
+    """
+    Upload and parse student CV using Gemini, audit it, and tick off the corresponding task.
+    """
+    try:
+        from google import genai
+        from google.genai import types
+        file_bytes = await file.read()
+        mime = file.content_type or "application/pdf"
+        
+        from llm.gemini_client import get_gemini_client
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY_PLACEMENT")
+        client = get_gemini_client(api_key=api_key)
+        
+        prompt = """
+        You are an expert resume checker.
+        Audit this student resume. Check if it is well-formatted, lists clear skills (technical and soft),
+        and highlights appropriate project experiences.
+        Provide:
+        1. An overall score (out of 10)
+        2. Strong parts of the resume
+        3. Specific gaps or formatting issues that need to be corrected.
+        Return your analysis in clear markdown.
+        """
+        
+        resp = client.models.generate_content(
+            model="gemini-3.1-flash-lite",
+            contents=[
+                types.Part.from_bytes(
+                    data=file_bytes,
+                    mime_type=mime
+                ),
+                prompt
+            ]
+        )
+        feedback = resp.text.strip()
+        
+        # Toggle the resume preparation task on the student checklist
+        tasks = get_student_tasks(student_id)
+        t_index_to_toggle = None
+        for t in tasks:
+            t_title = t["title"].lower()
+            if "resume" in t_title or "cv" in t_title or "portfolio" in t_title:
+                t_index_to_toggle = t["task_index"]
+                toggle_task_completion(student_id, t["task_index"], True)
+                break
+                
+        # Add feedback comment to the database so mentor can see it
+        from database import get_connection
+        conn = get_connection()
+        cursor = conn.cursor()
+        comment_text = f"[AUTOMATED CV VERIFICATION REPORT]\nScore: Audit Completed.\n{feedback[:800]}"
+        cursor.execute("""
+            INSERT INTO dashboard_comments (student_id, faculty_name, comment_text)
+            VALUES (?, 'AI Resume Auditor', ?)
+        """, (student_id, comment_text))
+        conn.commit()
+        conn.close()
+        
+        return {
+            "status": "success",
+            "feedback": feedback,
+            "task_toggled": t_index_to_toggle is not None,
+            "task_index": t_index_to_toggle
+        }
+    except Exception as e:
+        logger.error(f"Error verifying resume: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/students/{student_id}/verify-certificate")
+async def verify_certificate_endpoint(student_id: str, file: UploadFile = File(...), task_index: Optional[int] = None):
+    """
+    Verify external certificates using Gemini Vision and check off tasks.
+    """
+    try:
+        from google import genai
+        from google.genai import types
+        file_bytes = await file.read()
+        mime = file.content_type or "image/png"
+        
+        from llm.gemini_client import get_gemini_client
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY_PLACEMENT")
+        client = get_gemini_client(api_key=api_key)
+        
+        prompt = """
+        You are an academic credential verifier.
+        Check if this uploaded document is a valid certificate of completion or achievement.
+        Extract:
+        1. Recipient student name
+        2. Certification subject / course title
+        3. Validating platform (e.g. Coursera, Udemy, NPTEL)
+        
+        Return ONLY a valid JSON block containing:
+        - "is_valid": boolean
+        - "subject": string
+        - "platform": string
+        - "recipient": string
+        - "reason": string
+        Do not wrap in markdown or include extra text.
+        """
+        
+        resp = client.models.generate_content(
+            model="gemini-3.1-flash-lite",
+            contents=[
+                types.Part.from_bytes(
+                    data=file_bytes,
+                    mime_type=mime
+                ),
+                prompt
+            ]
+        )
+        
+        raw_text = resp.text.strip()
+        logger.info(f"Certificate raw output from Gemini: {raw_text}")
+        
+        cleaned_text = raw_text
+        if "```" in cleaned_text:
+            if "```json" in cleaned_text:
+                cleaned_text = cleaned_text.split("```json")[-1].split("```")[0].strip()
+            else:
+                parts = cleaned_text.split("```")
+                if len(parts) >= 3:
+                    cleaned_text = parts[1].strip()
+                else:
+                    cleaned_text = parts[-1].strip()
+        
+        # Strip potential leading/trailing markdown labels
+        if cleaned_text.startswith("json"):
+            cleaned_text = cleaned_text[4:].strip()
+            
+        result = json.loads(cleaned_text)
+        
+        is_valid = result.get("is_valid", False)
+        subject = result.get("subject", "External Course")
+        platform = result.get("platform", "Online Platform")
+        recipient = result.get("recipient", "Student")
+        
+        toggled = False
+        t_index = task_index
+        
+        if is_valid:
+            if t_index is not None:
+                toggle_task_completion(student_id, t_index, True)
+                toggled = True
+            else:
+                tasks = get_student_tasks(student_id)
+                for t in tasks:
+                    t_title = t["title"].lower()
+                    if "certif" in t_title or "course" in t_title or "nptel" in t_title:
+                        toggle_task_completion(student_id, t["task_index"], True)
+                        toggled = True
+                        t_index = t["task_index"]
+                        break
+                        
+            from database import get_connection
+            conn = get_connection()
+            cursor = conn.cursor()
+            comment_text = f"[AUTOMATED CERTIFICATE VERIFICATION]\nPlatform: {platform}\nTopic: {subject}\nRecipient: {recipient}\nStatus: Verified and Toggled Checklist."
+            cursor.execute("""
+                INSERT INTO dashboard_comments (student_id, faculty_name, comment_text)
+                VALUES (?, 'AI Certificate Verifier', ?)
+            """, (student_id, comment_text))
+            conn.commit()
+            conn.close()
+            
+        return {
+            "status": "success",
+            "is_valid": is_valid,
+            "extracted_data": result,
+            "task_toggled": toggled,
+            "task_index": t_index
+        }
+    except Exception as e:
+        import datetime
+        import traceback
+        log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_errors.log")
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(f"\n--- Certificate Error: {datetime.datetime.now().isoformat()} ---\n")
+            f.write(f"Student ID: {student_id}\n")
+            f.write(f"Exception: {e}\n")
+            f.write(traceback.format_exc())
+            f.write("-----------------------------------------\n")
+        logger.error(f"Error verifying certificate: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def run_continuous_risk_monitor():
+    """
+    Background worker that runs periodically, scans for students crossing risk criteria,
+    and automatically triggers the LangGraph intervention generation workflow.
+    """
+    import asyncio
+    import datetime
+    
+    # Wait a few seconds for database and servers to boot
+    await asyncio.sleep(5)
+    logger.info("Continuous Risk Monitor background worker started.")
+    
+    while True:
+        try:
+            from database import get_connection, insert_intervention
+            from graph import graph
+            
+            conn = get_connection()
+            cursor = conn.cursor()
+            
+            # Select students with critical indicators who DO NOT have any intervention reports in intervention_reports (limit to 3 per cycle to preserve LLM API quota)
+            cursor.execute("""
+                SELECT s.student_id, s.name, s.cgpa, s.attendance_rate, s.backlog_count, s.fee_delay_days, s.financial_stress_score
+                FROM students s
+                LEFT JOIN intervention_reports i ON s.student_id = i.student_id
+                WHERE i.student_id IS NULL AND (
+                    s.cgpa < 7.0 OR 
+                    s.attendance_rate < 75.0 OR 
+                    s.backlog_count > 0 OR 
+                    s.fee_delay_days > 30 OR 
+                    s.financial_stress_score > 7.0
+                )
+                LIMIT 3
+            """)
+            at_risk_students = [dict(row) for row in cursor.fetchall()]
+            conn.close()
+            
+            for student in at_risk_students:
+                student_id = student["student_id"]
+                logger.info(f"[MONITOR] Auto-escalating student {student_id} ({student['name']}) due to risk metrics.")
+                
+                state = {
+                    "student_id": student_id,
+                    "risk_profile": {},
+                    "gathered_info": {},
+                    "tools_called": [],
+                    "status": "",
+                    "response": {}
+                }
+                
+                try:
+                    result = graph.invoke(state)
+                    plan = result["response"]
+                    
+                    # Insert the draft intervention
+                    intervention_id = insert_intervention(student_id, plan)
+                    
+                    conn = get_connection()
+                    cursor = conn.cursor()
+                    
+                    # Flag the student workflow
+                    now = datetime.datetime.now().isoformat()
+                    cursor.execute("""
+                        INSERT INTO dashboard_workflow (student_id, is_flagged, status, updated_at)
+                        VALUES (?, 1, 'Intervention Pending', ?)
+                        ON CONFLICT(student_id) DO UPDATE SET
+                            is_flagged = 1,
+                            status = 'Intervention Pending',
+                            updated_at = excluded.updated_at
+                    """, (student_id, now))
+                    
+                    # Set is_newly_active in students table
+                    cursor.execute("""
+                        UPDATE students SET is_newly_active = 1 WHERE student_id = ?
+                    """, (student_id,))
+                    
+                    # Add comment explaining auto-trigger
+                    alert_comment = (
+                        f"[SYSTEM ALERT] Student automatically flagged due to: "
+                        f"CGPA: {student['cgpa']}, Attendance: {student['attendance_rate']}%, "
+                        f"Backlogs: {student['backlog_count']}, Fee Delay: {student['fee_delay_days']} days. "
+                        f"Draft intervention generated (ID: {intervention_id})."
+                    )
+                    cursor.execute("""
+                        INSERT INTO dashboard_comments (student_id, faculty_name, comment_text)
+                        VALUES (?, 'Risk Engine Monitor', ?)
+                    """, (student_id, alert_comment))
+                    
+                    conn.commit()
+                    conn.close()
+                    logger.info(f"[MONITOR] Successfully generated draft intervention for {student_id}")
+                    
+                except Exception as ex:
+                    logger.error(f"[MONITOR] Failed to auto-generate intervention for {student_id}: {ex}")
+                    
+        except Exception as e:
+            logger.error(f"Error in Continuous Risk Monitor loop: {e}")
+            
+        # Poll every 60 seconds
+        await asyncio.sleep(60)
+
+@app.on_event("startup")
+def start_background_monitor():
+    import asyncio
+    asyncio.create_task(run_continuous_risk_monitor())
 
 
 # ── Mount Static Directory ────────────────────────────────────────────────────

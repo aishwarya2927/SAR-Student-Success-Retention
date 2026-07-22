@@ -1349,6 +1349,157 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             text-align: left;
         }
+
+        /* AI Floating Chatbot Styles */
+        .chat-widget-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px var(--primary-glow);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+        .chat-widget-btn:hover {
+            transform: scale(1.1) rotate(15deg);
+        }
+        .chat-window {
+            position: fixed;
+            bottom: 105px;
+            right: 30px;
+            width: 380px;
+            height: 500px;
+            background: rgba(17, 24, 39, 0.95);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 1000;
+            backdrop-filter: blur(20px);
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 16px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chat-msg {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .chat-msg.student {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+        .chat-msg.agent {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+        }
+        .chat-msg.system {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--warning);
+            font-size: 11px;
+            align-self: center;
+            max-width: 90%;
+            text-align: center;
+            border-radius: 8px;
+        }
+        .chat-input-area {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+            background: rgba(0,0,0,0.2);
+        }
+        .chat-input-area input {
+            flex: 1;
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+        }
+        .chat-input-area button {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        .chat-input-area button:hover {
+            background: var(--secondary);
+        }
+        .chat-chips {
+            display: flex;
+            gap: 8px;
+            padding: 8px 16px;
+            overflow-x: auto;
+            border-top: 1px solid rgba(255,255,255,0.03);
+        }
+        .chat-chip {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: var(--transition);
+        }
+        .chat-chip:hover {
+            color: white;
+            border-color: var(--secondary);
+            background: rgba(6, 182, 212, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -1474,6 +1625,24 @@
                             <label for="student_id">Student ID</label>
                         </div>
                         <input type="text" id="student_id" placeholder="e.g. STU202600055" value="">
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-top: 12px;">
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="email">Personal Email Address</label>
+                            <span class="optional-badge">(Required for Outreach)</span>
+                        </div>
+                        <input type="email" id="email" placeholder="e.g. student@spit.ac.in" value="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-label-container">
+                            <label for="phone">Phone Number</label>
+                            <span class="optional-badge">(Required for Outreach)</span>
+                        </div>
+                        <input type="text" id="phone" placeholder="e.g. +91 98765 43210" value="">
                     </div>
                 </div>
 
@@ -2027,6 +2196,24 @@
                         </p>
                     </div>
                 </div>
+
+                <!-- AI Resume Verification Panel -->
+                <div class="glass-card" style="margin-top: 16px;">
+                    <h2 style="font-size: 18px; color: white; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-file-invoice" style="color: var(--secondary);"></i> AI Resume Auditor (ATS Check)
+                    </h2>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                        Upload your resume in PDF/Image format. Gemini will automatically audit your resume content, grade it, save feedback for your mentor, and check off your resume preparation task.
+                    </p>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <input type="file" id="resume-file-input" accept=".pdf,.png,.jpg,.jpeg" style="display: none;" onchange="handleResumeUpload()">
+                        <button class="btn btn-restart" style="padding: 10px 18px; background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); color: var(--secondary);" onclick="document.getElementById('resume-file-input').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Select Resume File</button>
+                        <span id="resume-file-name" style="font-size: 12px; color: var(--text-muted);">No file selected</span>
+                    </div>
+                    <div id="resume-audit-feedback" style="margin-top: 16px; display: none; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; max-height: 300px; overflow-y: auto;">
+                        <!-- Feedback loads here -->
+                    </div>
+                </div>
             </div>
 
             <!-- Mentor Intervention Page Section -->
@@ -2097,6 +2284,24 @@
                     </h3>
                     <div id="mentor-comments-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto;">
                         <!-- Comments will load here -->
+                    </div>
+                </div>
+
+                <!-- AI Certificate Verification Panel -->
+                <div class="glass-card" style="margin-top: 16px;">
+                    <h3 style="font-size: 16px; margin-bottom: 12px; color: white; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-award" style="color: var(--primary);"></i> AI Course Certificate Verifier
+                    </h3>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                        Completed a course or certification? Upload the certificate image or PDF. The agent will verify the details using Vision, log proof in the comments, and check off the corresponding task.
+                    </p>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <input type="file" id="cert-file-input" accept=".pdf,.png,.jpg,.jpeg" style="display: none;" onchange="handleCertificateUpload()">
+                        <button class="btn btn-restart" style="padding: 10px 18px; background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); color: var(--primary);" onclick="document.getElementById('cert-file-input').click()"><i class="fa-solid fa-upload"></i> Upload Certificate File</button>
+                        <span id="cert-file-name" style="font-size: 12px; color: var(--text-muted);">No file selected</span>
+                    </div>
+                    <div id="cert-verification-feedback" style="margin-top: 16px; display: none; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.5; max-height: 300px; overflow-y: auto;">
+                        <!-- Feedback loads here -->
                     </div>
                 </div>
             </div>
@@ -2378,7 +2583,7 @@
         }
 
         function goToFacultyDashboard() {
-            window.location.href = window.location.origin.replace(':8000', ':8001');
+            window.location.href = window.location.origin.replace(':8000', ':8080');
         }
 
         function logoutRole() {
@@ -2594,10 +2799,14 @@
             const internalMarksVal = document.getElementById('internal_marks_avg').value.trim();
             const studyHoursVal = document.getElementById('weekly_study_hours').value.trim();
             const lmsLoginsVal = document.getElementById('lms_login_frequency').value.trim();
+            const emailVal = document.getElementById('email').value.trim();
+            const phoneVal = document.getElementById('phone').value.trim();
 
             return {
                 student_id: document.getElementById('student_id').value.trim(),
                 name: document.getElementById('name').value.trim(),
+                email: emailVal || null,
+                phone: phoneVal || null,
                 cgpa: cgpaVal ? parseFloat(cgpaVal) : null,
                 backlog_count: counters.backlog_count,
                 attendance_rate: parseFloat(document.getElementById('attendance_rate').value),
@@ -3220,6 +3429,8 @@
                 // Prefill the registration wizard form in case they click "Edit Details"
                 document.getElementById('student_id').value = data.student_id;
                 document.getElementById('name').value = data.name;
+                document.getElementById('email').value = data.email || '';
+                document.getElementById('phone').value = data.phone || '';
                 
                 // Toggle views
                 document.getElementById('student-login-container').style.display = 'none';
@@ -3249,7 +3460,7 @@
 
         function goToFacultyDashboard() {
             if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-                window.location.href = "http://" + window.location.hostname + ":8001";
+                window.location.href = "http://" + window.location.hostname + ":8080";
             } else {
                 window.location.href = "https://faculty-dashboard-e2ke.onrender.com";
             }
@@ -3819,7 +4030,232 @@
                 loader.style.display = 'none';
             }
         }
+
+        // ── CHATBOT FUNCTIONS ──
+        function toggleChatWindow() {
+            const chat = document.getElementById('chat-window');
+            if (chat.style.display === 'none' || chat.style.display === '') {
+                chat.style.display = 'flex';
+                loadChatHistory();
+            } else {
+                chat.style.display = 'none';
+            }
+        }
+
+        async function loadChatHistory() {
+            const studentId = document.getElementById('res-student-id')?.innerText || document.getElementById('login-student-id')?.value.trim();
+            if (!studentId) return;
+            try {
+                const res = await fetch(`/api/students/${studentId}/chat`);
+                if (res.ok) {
+                    const logs = await res.json();
+                    const msgBox = document.getElementById('chat-messages');
+                    msgBox.innerHTML = '';
+                    if (logs.length === 0) {
+                        msgBox.innerHTML = '<div class="chat-msg agent">Hello! I am your Success Advisor. Ask me about attendance policies, study advice, or type <b>"mock interview"</b> to practice.</div>';
+                    } else {
+                        logs.forEach(log => {
+                            let type = log.sender;
+                            let msg = log.message;
+                            if (msg.startsWith("[SYSTEM")) {
+                                type = "system";
+                                msg = msg.replace("[SYSTEM: ", "").replace("]", "");
+                            }
+                            const div = document.createElement('div');
+                            div.className = `chat-msg ${type}`;
+                            div.innerHTML = msg.replace(/\n/g, '<br>');
+                            msgBox.appendChild(div);
+                        });
+                    }
+                    msgBox.scrollTop = msgBox.scrollHeight;
+                }
+            } catch (err) {
+                console.error("Error loading chat logs:", err);
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const studentId = document.getElementById('res-student-id')?.innerText || document.getElementById('login-student-id')?.value.trim();
+            if (!studentId) {
+                alert("Please log in as a student first to use the chatbot.");
+                return;
+            }
+
+            const msgBox = document.getElementById('chat-messages');
+            const sDiv = document.createElement('div');
+            sDiv.className = 'chat-msg student';
+            sDiv.innerText = message;
+            msgBox.appendChild(sDiv);
+            msgBox.scrollTop = msgBox.scrollHeight;
+            input.value = '';
+
+            const lDiv = document.createElement('div');
+            lDiv.className = 'chat-msg agent';
+            lDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Agent is thinking...';
+            msgBox.appendChild(lDiv);
+            msgBox.scrollTop = msgBox.scrollHeight;
+
+            try {
+                if (message.toLowerCase() === 'clear chat') {
+                    await fetch(`/api/students/${studentId}/chat/clear`, { method: 'POST' });
+                    lDiv.remove();
+                    await loadChatHistory();
+                    return;
+                }
+
+                const res = await fetch(`/api/students/${studentId}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                lDiv.remove();
+                if (res.ok) {
+                    const data = await res.json();
+                    await loadChatHistory();
+                } else {
+                    const err = document.createElement('div');
+                    err.className = 'chat-msg agent';
+                    err.innerText = "Error getting reply from agent.";
+                    msgBox.appendChild(err);
+                }
+            } catch (err) {
+                lDiv.remove();
+                console.error("Chat error:", err);
+            }
+        }
+
+        function chatQuickReply(msg) {
+            document.getElementById('chat-input').value = msg;
+            sendChatMessage();
+        }
+
+        // ── FILE UPLOAD FUNCTIONS ──
+        async function handleResumeUpload() {
+            const studentId = document.getElementById('res-student-id')?.innerText;
+            if (!studentId) {
+                alert("Please log in first.");
+                return;
+            }
+            const fileInput = document.getElementById('resume-file-input');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            document.getElementById('resume-file-name').innerText = file.name;
+            const feedbackDiv = document.getElementById('resume-audit-feedback');
+            feedbackDiv.style.display = 'block';
+            feedbackDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing resume and running ATS check...';
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const res = await fetch(`/api/students/${studentId}/verify-resume`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    feedbackDiv.innerHTML = `<strong>Resume Audit Result:</strong><br><br>${data.feedback.replace(/\n/g, '<br>')}`;
+                    await lookupStudentProgressDirect(studentId);
+                } else {
+                    feedbackDiv.innerHTML = '<span style="color:var(--danger)">Error: Failed to process resume.</span>';
+                }
+            } catch (err) {
+                feedbackDiv.innerHTML = `<span style="color:var(--danger)">Network error: ${err.message}</span>`;
+            }
+        }
+
+        async function handleCertificateUpload() {
+            const studentId = document.getElementById('res-student-id')?.innerText;
+            if (!studentId) {
+                alert("Please log in first.");
+                return;
+            }
+            const fileInput = document.getElementById('cert-file-input');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            document.getElementById('cert-file-name').innerText = file.name;
+            const feedbackDiv = document.getElementById('cert-verification-feedback');
+            feedbackDiv.style.display = 'block';
+            feedbackDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying certificate with Vision OCR...';
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const res = await fetch(`/api/students/${studentId}/verify-certificate`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.is_valid) {
+                        feedbackDiv.innerHTML = `<strong>✅ Certificate Verified!</strong><br>Topic: ${data.extracted_data.subject}<br>Platform: ${data.extracted_data.platform}<br>Name: ${data.extracted_data.recipient}<br><br><span style="color:var(--success)">Task has been checked off.</span>`;
+                        await lookupStudentProgressDirect(studentId);
+                    } else {
+                        feedbackDiv.innerHTML = `<strong>❌ Certificate Invalid:</strong><br>${data.extracted_data.reason}`;
+                    }
+                } else {
+                    feedbackDiv.innerHTML = '<span style="color:var(--danger)">Error: Failed to verify certificate.</span>';
+                }
+            } catch (err) {
+                feedbackDiv.innerHTML = `<span style="color:var(--danger)">Network error: ${err.message}</span>`;
+            }
+        }
+
+        async function lookupStudentProgressDirect(studentId) {
+            try {
+                const response = await fetch(`/api/students/${studentId}/progress`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const tasks = data.tasks || [];
+                    tasks.forEach(t => {
+                        const cb = document.getElementById(`task-chk-${t.task_index}`);
+                        if (cb) {
+                            cb.checked = t.completed === 1;
+                            const titleText = cb.closest('.timeline-item')?.querySelector('.timeline-title');
+                            if (titleText) {
+                                titleText.style.textDecoration = t.completed === 1 ? 'line-through' : 'none';
+                                titleText.style.color = t.completed === 1 ? 'var(--text-muted)' : 'white';
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Direct progress lookup error:", e);
+            }
+        }
     </script>
+
+    <!-- Floating AI Success Advisor Chatbot -->
+    <div class="chat-widget-btn" onclick="toggleChatWindow()">
+        <i class="fa-comments fa-solid"></i>
+    </div>
+    
+    <div id="chat-window" class="chat-window">
+        <div class="chat-header">
+            <h3><i class="fa-solid fa-robot"></i> AI Success Advisor</h3>
+            <button onclick="toggleChatWindow()" style="background: transparent; border: none; color: white; cursor: pointer; font-size: 16px;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages load dynamically -->
+        </div>
+        <div class="chat-chips">
+            <span class="chat-chip" onclick="chatQuickReply('What is the SPIT attendance policy?')">Attendance Policy</span>
+            <span class="chat-chip" onclick="chatQuickReply('Start mock interview for TCS')">TCS Mock Interview</span>
+            <span class="chat-chip" onclick="chatQuickReply('Clear Chat')">Clear History</span>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Ask about policies, placement, mock interviews..." onkeydown="if(event.key === 'Enter') sendChatMessage()">
+            <button onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
 
     <!-- ── ADD STUDENT MODAL ── -->
     <div id="add-student-modal" class="modal-overlay">
