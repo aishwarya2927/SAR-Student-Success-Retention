@@ -498,7 +498,17 @@ def insert_intervention(student_id: str, plan: dict) -> int:
     conn.close()
     return new_id
 
-def send_outreach_email(student_email: str, student_name: str, faculty_name: str, actions: list[str]) -> bool:
+def get_next_meeting_slot():
+    import datetime
+    # 3 days from today at 3:00 PM
+    now = datetime.datetime.now()
+    meeting_dt = now + datetime.timedelta(days=3)
+    # If it falls on a Sunday, move to Monday
+    if meeting_dt.weekday() == 6:  # Sunday
+        meeting_dt += datetime.timedelta(days=1)
+    return meeting_dt.strftime("%A, %B %d, %Y"), "3:00 PM"
+
+def send_outreach_email(student_email: str, student_name: str, faculty_name: str, actions: list[str]) -> tuple[bool, str]:
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
@@ -515,7 +525,12 @@ def send_outreach_email(student_email: str, student_name: str, faculty_name: str
         smtp_password = smtp_password.replace(" ", "").strip()
         
     if not all([smtp_host, smtp_port, smtp_user, smtp_password]):
-        return False
+        missing = []
+        if not smtp_host: missing.append("SMTP_HOST")
+        if not smtp_port: missing.append("SMTP_PORT")
+        if not smtp_user: missing.append("SMTP_USER")
+        if not smtp_password: missing.append("SMTP_PASSWORD")
+        return False, f"Missing SMTP settings: {', '.join(missing)}"
         
     try:
         # Create message container
@@ -526,6 +541,7 @@ def send_outreach_email(student_email: str, student_name: str, faculty_name: str
         
         # Build styled HTML body
         actions_li = "".join(f"<li>{action}</li>" for action in actions)
+        meeting_date, meeting_time = get_next_meeting_slot()
         
         html = f"""
         <html>
@@ -546,10 +562,32 @@ def send_outreach_email(student_email: str, student_name: str, faculty_name: str
               </ul>
             </div>
             
-            <p>To support you in resolving these action items and ensuring your academic progress, a counselling session has been scheduled for you. Please click the button below to view availability and confirm your support appointment:</p>
-            
-            <div style="text-align: center; margin: 24px 0;">
-              <a href="https://calendly.com/spit-success/counselling" style="background-color: #06b6d4; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-block; box-shadow: 0 4px 6px rgba(6, 182, 212, 0.2);">Book Counselling Session</a>
+            <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 16px; margin: 18px 0; border-radius: 6px;">
+              <h4 style="margin: 0 0 6px 0; color: #14532d; font-size: 15px;">Scheduled Support & Advising Session</h4>
+              <p style="margin: 0 0 8px 0; color: #166534; font-size: 13px;">
+                An initial wellness check-in and counselling support meeting has been scheduled for you:
+              </p>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #166534;">
+                <tr>
+                  <td style="padding: 2px 0; width: 100px; font-weight: bold;">Faculty Advisor:</td>
+                  <td style="padding: 2px 0;">{faculty_name}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 0; font-weight: bold;">Date:</td>
+                  <td style="padding: 2px 0;">{meeting_date}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 0; font-weight: bold;">Time:</td>
+                  <td style="padding: 2px 0;">{meeting_time}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 2px 0; font-weight: bold;">Location:</td>
+                  <td style="padding: 2px 0;">Faculty Advising Room (or Online via institutional portal)</td>
+                </tr>
+              </table>
+              <p style="margin: 8px 0 0 0; font-size: 11px; color: #15803d; font-style: italic;">
+                Note: In future versions, this meeting card will be directly customizable and link to the student wellness counselling portal.
+              </p>
             </div>
             
             <p style="font-size: 13px; color: #666666;">
@@ -572,10 +610,11 @@ def send_outreach_email(student_email: str, student_name: str, faculty_name: str
         server.login(smtp_user, smtp_password)
         server.sendmail(sender_email, student_email, msg.as_string())
         server.quit()
-        return True
+        return True, "Success"
     except Exception as e:
-        print(f"Error dispatching outreach email: {e}")
-        return False
+        err_msg = str(e)
+        print(f"Error dispatching outreach email: {err_msg}")
+        return False, err_msg
 
 def approve_intervention(intervention_id: int, faculty_name: str):
     import datetime
@@ -601,47 +640,85 @@ def approve_intervention(intervention_id: int, faculty_name: str):
         student_email = student_row["email"] if student_row else None
         student_phone = student_row["phone"] if student_row else None
         
+        # Generate meeting slot
+        meeting_date, meeting_time = get_next_meeting_slot()
+        
         # Check if we should send a real email
         is_synthetic = student_email and (student_email.endswith("@example.com") or student_email.endswith("@synthetic.com"))
-        email_sent = False
+        
         if student_email and not is_synthetic:
             # Send email in a background thread so the dashboard approval remains instant and non-blocking
             import threading
-            def bg_send():
+            def bg_send_and_log():
                 try:
-                    send_outreach_email(student_email, student_name, faculty_name, actions)
+                    success, err_msg = send_outreach_email(student_email, student_name, faculty_name, actions)
+                    
+                    conn_bg = get_connection()
+                    cursor_bg = conn_bg.cursor()
+                    
+                    if success:
+                        outreach_status = "Real email dispatched successfully"
+                    else:
+                        outreach_status = f"Failed to send email ({err_msg})"
+                        
+                    outreach_text = (
+                        f"[SYSTEM OUTREACH] Automated intervention notification sent to student. "
+                        f"Status: {outreach_status}. "
+                        f"Scheduled counselling support check-in: {meeting_date} at {meeting_time} with {faculty_name}."
+                    )
+                    cursor_bg.execute("""
+                        INSERT INTO dashboard_comments (student_id, faculty_name, comment_text, created_at)
+                        VALUES (?, 'System Outreach Agent', ?, ?)
+                    """, (student_id, outreach_text, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+                    conn_bg.commit()
+                    conn_bg.close()
+                    
+                    # Log to file
+                    log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outreach_notifications.log")
+                    with open(log_path, "a", encoding="utf-8") as log_f:
+                        log_f.write(
+                            f"--- Outreach Event: {datetime.datetime.now().isoformat()} ---\n"
+                            f"To Student ID: {student_id} ({student_name})\n"
+                            f"Email: {student_email} (Sent: {success}, Status: {outreach_status})\n"
+                            f"Phone: {student_phone}\n"
+                            f"Approving Faculty: {faculty_name}\n"
+                            f"Actions: {', '.join(actions)}\n"
+                            f"Meeting Appointment: {meeting_date} at {meeting_time} with {faculty_name}\n"
+                            f"---------------------------------------------------\n\n"
+                        )
                 except Exception as thread_e:
-                    print(f"Error in background outreach email dispatch: {thread_e}")
-            threading.Thread(target=bg_send, daemon=True).start()
-            email_sent = True
+                    print(f"Error in background outreach email dispatch thread: {thread_e}")
+                    
+            threading.Thread(target=bg_send_and_log, daemon=True).start()
+        else:
+            # Mock mode or synthetic email
+            outreach_status = "Logged to outreach log (Mock Mode)" if student_email else "No email address on file"
+            outreach_text = (
+                f"[SYSTEM OUTREACH] Automated intervention notification sent to student. "
+                f"Status: {outreach_status}. "
+                f"Scheduled counselling support check-in: {meeting_date} at {meeting_time} with {faculty_name}."
+            )
+            cursor.execute("""
+                INSERT INTO dashboard_comments (student_id, faculty_name, comment_text, created_at)
+                VALUES (?, 'System Outreach Agent', ?, ?)
+            """, (student_id, outreach_text, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
             
-        outreach_status = "Real email dispatched." if email_sent else "Logged to outreach log (Mock Mode)."
-        outreach_text = (
-            f"[SYSTEM OUTREACH] Automated intervention notification sent to student. "
-            f"Status: {outreach_status}. "
-            f"Scheduled counselling support booking link: https://calendly.com/spit-success/counselling"
-        )
-        cursor.execute("""
-            INSERT INTO dashboard_comments (student_id, faculty_name, comment_text, created_at)
-            VALUES (?, 'System Outreach Agent', ?, ?)
-        """, (student_id, outreach_text, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        
-        # Log to file
-        log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outreach_notifications.log")
-        try:
-            with open(log_path, "a", encoding="utf-8") as log_f:
-                log_f.write(
-                    f"--- Outreach Event: {datetime.datetime.now().isoformat()} ---\n"
-                    f"To Student ID: {student_id} ({student_name})\n"
-                    f"Email: {student_email} (Sent: {email_sent})\n"
-                    f"Phone: {student_phone}\n"
-                    f"Approving Faculty: {faculty_name}\n"
-                    f"Actions: {', '.join(actions)}\n"
-                    f"Counselling Booking Link: https://calendly.com/spit-success/counselling\n"
-                    f"---------------------------------------------------\n\n"
-                )
-        except Exception as e:
-            print(f"Error writing mock email log: {e}")
+            # Log to file
+            log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outreach_notifications.log")
+            try:
+                with open(log_path, "a", encoding="utf-8") as log_f:
+                    log_f.write(
+                        f"--- Outreach Event: {datetime.datetime.now().isoformat()} ---\n"
+                        f"To Student ID: {student_id} ({student_name})\n"
+                        f"Email: {student_email} (Sent: False, Reason: Mock/No Email)\n"
+                        f"Phone: {student_phone}\n"
+                        f"Approving Faculty: {faculty_name}\n"
+                        f"Actions: {', '.join(actions)}\n"
+                        f"Meeting Appointment: {meeting_date} at {meeting_time} with {faculty_name}\n"
+                        f"---------------------------------------------------\n\n"
+                    )
+            except Exception as e:
+                print(f"Error writing mock email log: {e}")
         
     cursor.execute("""
     UPDATE intervention_reports
