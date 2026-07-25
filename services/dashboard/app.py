@@ -811,6 +811,24 @@ async def proxy_toggle_mentor_task(student_id: str, task_index: int, req: Mentor
         logger.error(f"Failed to toggle mentor task progress: {e}")
         raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
 
+@app.post("/api/students/{student_id}/outreach/retry")
+async def proxy_retry_outreach(student_id: str):
+    """
+    Proxies the outreach email retry to the Mentor Agent server.
+    """
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{MENTOR_AGENT_URL}/api/students/{student_id}/outreach/retry",
+                timeout=30
+            )
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
+            return response.json()
+    except httpx.RequestError as e:
+        logger.error(f"Failed to retry student outreach: {e}")
+        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+
 @app.post("/api/interventions/{intervention_id}/approve")
 async def proxy_approve_intervention(intervention_id: int, req: ApprovalRequest):
     """

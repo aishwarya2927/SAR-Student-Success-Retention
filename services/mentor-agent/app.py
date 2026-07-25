@@ -30,7 +30,8 @@ from database import (
     get_latest_intervention,
     save_chat_log,
     get_chat_logs,
-    clear_chat_logs
+    clear_chat_logs,
+    retry_outreach_email
 )
 from tools.chat_agent import process_student_chat
 
@@ -405,6 +406,24 @@ def api_approve_intervention(intervention_id: int, req: ApprovalRequest):
     except Exception as e:
         logger.error(f"Error approving intervention: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/students/{student_id}/outreach/retry")
+def api_retry_outreach(student_id: str):
+    """
+    Retries sending an academic intervention outreach email to a student.
+    """
+    try:
+        success, message = retry_outreach_email(student_id)
+        if not success:
+            raise HTTPException(status_code=400, detail=message)
+        return {"status": "success", "message": message}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error retrying outreach email for {student_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @app.post("/api/interventions/{intervention_id}/reject")

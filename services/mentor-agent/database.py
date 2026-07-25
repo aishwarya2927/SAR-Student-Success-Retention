@@ -508,6 +508,91 @@ def get_next_meeting_slot():
         meeting_dt += datetime.timedelta(days=1)
     return meeting_dt.strftime("%A, %B %d, %Y"), "3:00 PM"
 
+def send_outreach_email_http(student_email: str, student_name: str, sender_email: str, html_body: str) -> tuple[bool, str]:
+    import requests
+    
+    sendgrid_key = os.getenv("SENDGRID_API_KEY")
+    brevo_key = os.getenv("BREVO_API_KEY")
+    resend_key = os.getenv("RESEND_API_KEY")
+    
+    # 1. Try Resend (Highly recommended free tier: 3,000 free emails/month, 100/day)
+    if resend_key:
+        try:
+            url = "https://api.resend.com/emails"
+            headers = {
+                "Authorization": f"Bearer {resend_key}",
+                "Content-Type": "application/json"
+            }
+            from_addr = os.getenv("RESEND_FROM_EMAIL") or sender_email
+            # Resend default testing address if using standard gmail / placeholder domains without DNS validation
+            if "onboarding@resend.dev" in from_addr or "onboarding" in from_addr or sender_email.endswith("@gmail.com"):
+                from_addr = "onboarding@resend.dev"
+                
+            payload = {
+                "from": f"SuccessPath Alerts <{from_addr}>",
+                "to": [student_email],
+                "subject": "Academic Intervention Plan Approved - SuccessPath",
+                "html": html_body
+            }
+            res = requests.post(url, json=payload, headers=headers, timeout=15)
+            if res.status_code in (200, 201):
+                return True, "Resend HTTP API Success"
+            else:
+                return False, f"Resend API Error ({res.status_code}): {res.text}"
+        except Exception as e:
+            return False, f"Resend HTTP request failed: {e}"
+            
+    # 2. Try SendGrid (100 free emails/day)
+    if sendgrid_key:
+        try:
+            url = "https://api.sendgrid.com/v3/mail/send"
+            headers = {
+                "Authorization": f"Bearer {sendgrid_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "personalizations": [{
+                    "to": [{"email": student_email}]
+                }],
+                "from": {"email": sender_email},
+                "subject": "Academic Intervention Plan Approved - SuccessPath",
+                "content": [{
+                    "type": "text/html",
+                    "value": html_body
+                }]
+            }
+            res = requests.post(url, json=payload, headers=headers, timeout=15)
+            if res.status_code in (200, 202):
+                return True, "SendGrid HTTP API Success"
+            else:
+                return False, f"SendGrid API Error ({res.status_code}): {res.text}"
+        except Exception as e:
+            return False, f"SendGrid HTTP request failed: {e}"
+            
+    # 3. Try Brevo (300 free emails/day)
+    if brevo_key:
+        try:
+            url = "https://api.brevo.com/v3/smtp/email"
+            headers = {
+                "api-key": brevo_key,
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "sender": {"name": "SuccessPath Alerts", "email": sender_email},
+                "to": [{"email": student_email, "name": student_name}],
+                "subject": "Academic Intervention Plan Approved - SuccessPath",
+                "htmlContent": html_body
+            }
+            res = requests.post(url, json=payload, headers=headers, timeout=15)
+            if res.status_code in (200, 201):
+                return True, "Brevo HTTP API Success"
+            else:
+                return False, f"Brevo API Error ({res.status_code}): {res.text}"
+        except Exception as e:
+            return False, f"Brevo HTTP request failed: {e}"
+            
+    return False, "No HTTP Mail API Key configured."
+
 def send_outreach_email(student_email: str, student_name: str, faculty_name: str, actions: list[str]) -> tuple[bool, str]:
     import smtplib
     from email.mime.text import MIMEText
@@ -519,6 +604,77 @@ def send_outreach_email(student_email: str, student_name: str, faculty_name: str
     smtp_password = os.getenv("SMTP_PASSWORD")
     sender_email = os.getenv("SENDER_EMAIL", "successpath-alerts@spit.ac.in")
     
+    # Check if any HTTP API configurations are present
+    sendgrid_key = os.getenv("SENDGRID_API_KEY")
+    brevo_key = os.getenv("BREVO_API_KEY")
+    resend_key = os.getenv("RESEND_API_KEY")
+    
+    # Build styled HTML body
+    actions_li = "".join(f"<li>{action}</li>" for action in actions)
+    meeting_date, meeting_time = get_next_meeting_slot()
+    
+    html = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; border: 1px solid #dddddd; padding: 20px; border-radius: 8px;">
+        <div style="text-align: center; border-bottom: 2px solid #06b6d4; padding-bottom: 12px; margin-bottom: 20px;">
+          <h2 style="color: #06b6d4; margin: 0;">SuccessPath Onboarding & Outreach</h2>
+          <p style="font-size: 12px; color: #666666; margin: 4px 0 0 0;">SPIT Student Success & Retention Platform</p>
+        </div>
+        
+        <p>Dear <strong>{student_name}</strong>,</p>
+        
+        <p>We are writing to let you know that your academic advisor, <strong>{faculty_name}</strong>, has reviewed and approved your AI Academic Intervention Plan.</p>
+        
+        <div style="background-color: #f9fafb; border-left: 4px solid #06b6d4; padding: 12px; margin: 18px 0; border-radius: 4px;">
+          <h4 style="margin: 0 0 8px 0; color: #111827;">Your Mentor-Assigned Tasks & Action Items:</h4>
+          <ul style="margin: 0; padding-left: 20px;">
+            {actions_li}
+          </ul>
+        </div>
+        
+        <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 16px; margin: 18px 0; border-radius: 6px;">
+          <h4 style="margin: 0 0 6px 0; color: #14532d; font-size: 15px;">Scheduled Support & Advising Session</h4>
+          <p style="margin: 0 0 8px 0; color: #166534; font-size: 13px;">
+            An initial wellness check-in and counselling support meeting has been scheduled for you:
+          </p>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #166534;">
+            <tr>
+              <td style="padding: 2px 0; width: 100px; font-weight: bold;">Faculty Advisor:</td>
+              <td style="padding: 2px 0;">{faculty_name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 2px 0; font-weight: bold;">Date:</td>
+              <td style="padding: 2px 0;">{meeting_date}</td>
+            </tr>
+            <tr>
+              <td style="padding: 2px 0; font-weight: bold;">Time:</td>
+              <td style="padding: 2px 0;">{meeting_time}</td>
+            </tr>
+            <tr>
+              <td style="padding: 2px 0; font-weight: bold;">Location:</td>
+              <td style="padding: 2px 0;">Faculty Advising Room (or Online via institutional portal)</td>
+            </tr>
+          </table>
+          <p style="margin: 8px 0 0 0; font-size: 11px; color: #15803d; font-style: italic;">
+            Note: In future versions, this meeting card will be directly customizable and link to the student wellness counselling portal.
+          </p>
+        </div>
+        
+        <p style="font-size: 13px; color: #666666;">
+          Please log in to your <a href="http://localhost:8000" style="color: #06b6d4; text-decoration: none; font-weight: bold;">SuccessPath Portal</a> to update your task completion checklist and access recommended learning materials.
+        </p>
+        
+        <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 24px 0;" />
+        <p style="font-size: 11px; color: #999999; text-align: center; margin: 0;">
+          This is an automated notification from the SPIT SuccessPath system. Please do not reply directly to this email.
+        </p>
+      </body>
+    </html>
+    """
+    
+    if sendgrid_key or brevo_key or resend_key:
+        return send_outreach_email_http(student_email, student_name, sender_email, html)
+
     if smtp_password:
         if "#" in smtp_password:
             smtp_password = smtp_password.split("#")[0]
@@ -530,7 +686,7 @@ def send_outreach_email(student_email: str, student_name: str, faculty_name: str
         if not smtp_port: missing.append("SMTP_PORT")
         if not smtp_user: missing.append("SMTP_USER")
         if not smtp_password: missing.append("SMTP_PASSWORD")
-        return False, f"Missing SMTP settings: {', '.join(missing)}"
+        return False, f"Missing SMTP settings and no HTTP API keys found: {', '.join(missing)}"
         
     try:
         # Create message container
@@ -538,69 +694,6 @@ def send_outreach_email(student_email: str, student_name: str, faculty_name: str
         msg['Subject'] = f"Academic Intervention Plan Approved - SuccessPath"
         msg['From'] = sender_email
         msg['To'] = student_email
-        
-        # Build styled HTML body
-        actions_li = "".join(f"<li>{action}</li>" for action in actions)
-        meeting_date, meeting_time = get_next_meeting_slot()
-        
-        html = f"""
-        <html>
-          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; border: 1px solid #dddddd; padding: 20px; border-radius: 8px;">
-            <div style="text-align: center; border-bottom: 2px solid #06b6d4; padding-bottom: 12px; margin-bottom: 20px;">
-              <h2 style="color: #06b6d4; margin: 0;">SuccessPath Onboarding & Outreach</h2>
-              <p style="font-size: 12px; color: #666666; margin: 4px 0 0 0;">SPIT Student Success & Retention Platform</p>
-            </div>
-            
-            <p>Dear <strong>{student_name}</strong>,</p>
-            
-            <p>We are writing to let you know that your academic advisor, <strong>{faculty_name}</strong>, has reviewed and approved your AI Academic Intervention Plan.</p>
-            
-            <div style="background-color: #f9fafb; border-left: 4px solid #06b6d4; padding: 12px; margin: 18px 0; border-radius: 4px;">
-              <h4 style="margin: 0 0 8px 0; color: #111827;">Your Mentor-Assigned Tasks & Action Items:</h4>
-              <ul style="margin: 0; padding-left: 20px;">
-                {actions_li}
-              </ul>
-            </div>
-            
-            <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 16px; margin: 18px 0; border-radius: 6px;">
-              <h4 style="margin: 0 0 6px 0; color: #14532d; font-size: 15px;">Scheduled Support & Advising Session</h4>
-              <p style="margin: 0 0 8px 0; color: #166534; font-size: 13px;">
-                An initial wellness check-in and counselling support meeting has been scheduled for you:
-              </p>
-              <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #166534;">
-                <tr>
-                  <td style="padding: 2px 0; width: 100px; font-weight: bold;">Faculty Advisor:</td>
-                  <td style="padding: 2px 0;">{faculty_name}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 2px 0; font-weight: bold;">Date:</td>
-                  <td style="padding: 2px 0;">{meeting_date}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 2px 0; font-weight: bold;">Time:</td>
-                  <td style="padding: 2px 0;">{meeting_time}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 2px 0; font-weight: bold;">Location:</td>
-                  <td style="padding: 2px 0;">Faculty Advising Room (or Online via institutional portal)</td>
-                </tr>
-              </table>
-              <p style="margin: 8px 0 0 0; font-size: 11px; color: #15803d; font-style: italic;">
-                Note: In future versions, this meeting card will be directly customizable and link to the student wellness counselling portal.
-              </p>
-            </div>
-            
-            <p style="font-size: 13px; color: #666666;">
-              Please log in to your <a href="http://localhost:8000" style="color: #06b6d4; text-decoration: none; font-weight: bold;">SuccessPath Portal</a> to update your task completion checklist and access recommended learning materials.
-            </p>
-            
-            <hr style="border: 0; border-top: 1px solid #eeeeee; margin: 24px 0;" />
-            <p style="font-size: 11px; color: #999999; text-align: center; margin: 0;">
-              This is an automated notification from the SPIT SuccessPath system. Please do not reply directly to this email.
-            </p>
-          </body>
-        </html>
-        """
         
         msg.attach(MIMEText(html, 'html'))
         
@@ -615,6 +708,7 @@ def send_outreach_email(student_email: str, student_name: str, faculty_name: str
         err_msg = str(e)
         print(f"Error dispatching outreach email: {err_msg}")
         return False, err_msg
+
 
 def approve_intervention(intervention_id: int, faculty_name: str):
     import datetime
@@ -873,7 +967,113 @@ def clear_chat_logs(student_id: str):
     conn.commit()
     conn.close()
 
+def retry_outreach_email(student_id: str) -> tuple[bool, str]:
+    import datetime
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # Query latest approved intervention report for this student
+    cursor.execute("""
+        SELECT recommended_actions, approved_by 
+        FROM intervention_reports 
+        WHERE student_id = ? AND status = 'approved'
+        ORDER BY intervention_id DESC LIMIT 1
+    """, (student_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return False, "No approved intervention plan found for this student."
+        
+    faculty_name = row["approved_by"] or "Dr. Sharma"
+    try:
+        actions = json.loads(row["recommended_actions"])
+    except Exception:
+        actions = []
+        
+    # Query student details for name, email and phone
+    cursor.execute("SELECT name, email, phone FROM students WHERE student_id = ?", (student_id,))
+    student_row = cursor.fetchone()
+    if not student_row:
+        conn.close()
+        return False, f"Student {student_id} not found."
+        
+    student_name = student_row["name"]
+    student_email = student_row["email"]
+    student_phone = student_row["phone"]
+    conn.close()
+    
+    if not student_email:
+        return False, "No student email address on file."
+        
+    is_synthetic = student_email.endswith("@example.com") or student_email.endswith("@synthetic.com")
+    
+    meeting_date, meeting_time = get_next_meeting_slot()
+    
+    if is_synthetic:
+        # Mock mode or synthetic email
+        outreach_status = "Logged to outreach log (Mock Mode)"
+        outreach_text = (
+            f"[SYSTEM OUTREACH] Automated intervention notification sent to student. "
+            f"Status: {outreach_status}. "
+            f"Scheduled counselling support check-in: {meeting_date} at {meeting_time} with {faculty_name}."
+        )
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO dashboard_comments (student_id, faculty_name, comment_text, created_at)
+            VALUES (?, 'System Outreach Agent', ?, ?)
+        """, (student_id, outreach_text, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()
+        conn.close()
+        return True, "Mock email outreach retried successfully"
+
+    # For real email, spawn background thread
+    import threading
+    def bg_send_and_log():
+        try:
+            success, err_msg = send_outreach_email(student_email, student_name, faculty_name, actions)
+            
+            conn_bg = get_connection()
+            cursor_bg = conn_bg.cursor()
+            
+            if success:
+                outreach_status = "Real email dispatched successfully"
+            else:
+                outreach_status = f"Failed to send email ({err_msg})"
+                
+            outreach_text = (
+                f"[SYSTEM OUTREACH] Automated intervention notification sent to student. "
+                f"Status: {outreach_status}. "
+                f"Scheduled counselling support check-in: {meeting_date} at {meeting_time} with {faculty_name}."
+            )
+            cursor_bg.execute("""
+                INSERT INTO dashboard_comments (student_id, faculty_name, comment_text, created_at)
+                VALUES (?, 'System Outreach Agent', ?, ?)
+            """, (student_id, outreach_text, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            conn_bg.commit()
+            conn_bg.close()
+            
+            # Log to file
+            log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outreach_notifications.log")
+            with open(log_path, "a", encoding="utf-8") as log_f:
+                log_f.write(
+                    f"--- Outreach Retry Event: {datetime.datetime.now().isoformat()} ---\n"
+                    f"To Student ID: {student_id} ({student_name})\n"
+                    f"Email: {student_email} (Sent: {success}, Status: {outreach_status})\n"
+                    f"Phone: {student_phone}\n"
+                    f"Approving Faculty: {faculty_name}\n"
+                    f"Actions: {', '.join(actions)}\n"
+                    f"Meeting Appointment: {meeting_date} at {meeting_time} with {faculty_name}\n"
+                    f"---------------------------------------------------\n\n"
+                )
+        except Exception as thread_e:
+            print(f"Error in background outreach email retry thread: {thread_e}")
+            
+    threading.Thread(target=bg_send_and_log, daemon=True).start()
+    return True, "Outreach email dispatch retried."
+
 # Initialize DB on import/start
 init_db()
+
 
 
