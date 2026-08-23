@@ -225,3 +225,7 @@ services/mentor-agent/model_cache/
 # Chroma Vector Database
 services/mentor-agent/vector_store/chroma_db/
 services/mentor-agent/students.db
+
+# Internship report summary (contains documentation that user wants to keep offline)
+docs/internship_report_summary.md
+
