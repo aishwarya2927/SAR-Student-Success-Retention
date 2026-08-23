@@ -1,0 +1,431 @@
+import ast
+import json
+from auth import authenticator
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import requests
+from utils import load_students
+from database import (
+    insert_intervention,
+    approve_intervention,
+    reject_intervention,
+    get_latest_approved,
+    refresh_target_companies,
+    insert_placement,
+    approve_placement,
+    reject_placement,
+    get_latest_approved_placement,
+)
+
+st.title("👤 Student Detail View")
+st.caption("Select a student to see their full risk profile")
+
+if st.session_state.get("authentication_status"):
+    authenticator.logout("Logout", location="sidebar")
+    st.sidebar.write(f"Logged in as **{st.session_state['name']}**")
+
+df = load_students()
+
+# ── Auth guard — every page needs the logged-in mentor name ──────────────────
+logged_in_name = st.session_state.get("name", None)
+
+# ── Student selector ──────────────────────────────────────────────────────────
+selected_id = st.selectbox("Select student", sorted(df["student_id"].tolist()))
+student = df[df["student_id"] == selected_id].iloc[0]
+
+# ── Clear session state when student changes ──────────────────────────────────
+if st.session_state.get("_active_student") != selected_id:
+    st.session_state["_active_student"] = selected_id
+    for key in ["intervention_plan", "intervention_id", "approval_status",
+                "placement_plan", "placement_id", "placement_status"]:
+        st.session_state.pop(key, None)
+
+st.divider()
+
+# ── Key metrics ───────────────────────────────────────────────────────────────
+col1, col2, col3 = st.columns(3)
+col1.metric("CGPA",                  student["cgpa"])
+col2.metric("Attendance",            f"{student['attendance_percentage']}%")
+col3.metric("Prediction Confidence", f"{student['prediction_confidence']:.1f}")
+
+col4, col5, col6 = st.columns(3)
+col4.metric("Backlogs",       student["backlog_count"])
+col5.metric("Fee Delay Days", student["fee_delay_days"])
+col6.metric("Risk Band",      student["risk_band"].upper())
+
+st.divider()
+
+# ── Profile info ──────────────────────────────────────────────────────────────
+info_col1, info_col2 = st.columns(2)
+with info_col1:
+    st.write("**Department:**", student["department"])
+with info_col2:
+    st.write("**Year:**",       student["year_label"])
+
+st.divider()
+
+# ── Top contributing factors (SHAP-based) ─────────────────────────────────────
+st.subheader("Top Contributing Factors")
+st.caption("Based on the model's SHAP analysis — shows what the model relied on most for this prediction")
+
+top_factors_raw = student.get("top_factors", "[]")
+top_factors = ast.literal_eval(top_factors_raw) if isinstance(top_factors_raw, str) else top_factors_raw
+
+if top_factors:
+    factors_df = pd.DataFrame(top_factors)
+    fig = px.bar(
+        factors_df,
+        x="importance",
+        y="feature",
+        orientation="h",
+        title=f"Top factors for {selected_id}",
+        text="value"
+    )
+    fig.update_layout(yaxis={'categoryorder': 'total ascending'})
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.write("No factor breakdown available for this student.")
+
+st.divider()
+
+# ── Target Companies (from Person D) ─────────────────────────────────────────
+st.subheader("🎯 Target Companies")
+
+target_companies_raw = student.get("target_companies", None)
+updated_at           = student.get("target_companies_updated_at", None)
+
+col_tc1, col_tc2 = st.columns([3, 1])
+with col_tc1:
+    if target_companies_raw:
+        try:
+            companies = json.loads(target_companies_raw) if isinstance(target_companies_raw, str) else target_companies_raw
+            if isinstance(companies, list) and companies:
+                st.write(", ".join(companies))
+            else:
+                st.caption("No target companies on record.")
+        except Exception:
+            st.caption("No target companies on record.")
+        if updated_at:
+            st.caption(f"Last updated: {updated_at}")
+    else:
+        st.caption("No target companies fetched yet for this student.")
+
+with col_tc2:
+    if st.button("🔄 Refresh", key="refresh_companies"):
+        with st.spinner("Fetching from Person D..."):
+            result = refresh_target_companies(selected_id)
+            if result is not None:
+                st.success("Updated!")
+                st.rerun()
+            else:
+                st.error("Could not fetch — Person D's API may be down.")
+
+st.divider()
+
+# ── Tabs: Intervention Plan + Placement Plan ──────────────────────────────────
+tab1, tab2 = st.tabs(["📋 Intervention Plan", "💼 Placement Plan"])
+
+# ════════════════════════════════════════════════════════════════════════════════
+# TAB 1 — INTERVENTION PLAN (Person B /generate-intervention)
+# ════════════════════════════════════════════════════════════════════════════════
+with tab1:
+    st.subheader("📋 Intervention Plan")
+    st.caption("Generated by the Mentor Agent — click below to fetch a plan for this student")
+
+    MENTOR_AGENT_URL = "https://sar-mentor-agent.onrender.com/generate-intervention"
+
+    if st.button("Get Intervention Plan", key="get_intervention"):
+        with st.spinner("Contacting Mentor Agent..."):
+            try:
+                resp = requests.post(
+                    MENTOR_AGENT_URL,
+                    json={"student_id": selected_id},
+                    timeout=60,
+                )
+                resp.raise_for_status()
+                plan = resp.json()
+
+                intervention_id = insert_intervention(selected_id, plan)
+                st.session_state["intervention_plan"]  = plan
+                st.session_state["intervention_id"]    = intervention_id
+                st.session_state["approval_status"]    = "pending_approval"
+
+            except requests.exceptions.ConnectionError:
+                st.error("Could not reach the Mentor Agent.")
+            except requests.exceptions.Timeout:
+                st.error("Request timed out. The Mentor Agent took too long to respond.")
+            except requests.exceptions.HTTPError as e:
+                st.error(f"Mentor Agent returned an error: {e}")
+            except Exception as e:
+                st.error(f"Unexpected error: {e}")
+
+    if "intervention_plan" in st.session_state:
+        plan            = st.session_state["intervention_plan"]
+        intervention_id = st.session_state["intervention_id"]
+        approval_status = st.session_state.get("approval_status", "pending_approval")
+
+        st.markdown("**Student Summary**")
+        st.info(plan.get("student_summary", "—"))
+
+        b1, b2 = st.columns(2)
+        b1.metric("Risk Band",      plan.get("risk_band",      "—"))
+        b2.metric("Priority Level", plan.get("priority_level", "—"))
+
+        st.divider()
+
+        st.markdown("**Recommended Actions**")
+        actions = plan.get("recommended_actions", [])
+        if actions:
+            for i, action in enumerate(actions, 1):
+                st.markdown(f"{i}. {action}")
+        else:
+            st.write("No actions returned.")
+
+        st.divider()
+
+        st.markdown("**Follow-up Plan**")
+        st.warning(plan.get("follow_up_plan", "—"))
+
+        st.divider()
+
+        st.markdown("**Approval Status**")
+
+        if approval_status == "pending_approval":
+            st.markdown("🟡 **Pending Approval**")
+
+            # Use logged-in mentor name instead of a selectbox
+            if logged_in_name:
+                st.caption(f"Approving as: **{logged_in_name}**")
+            else:
+                st.warning("Not logged in — cannot approve.")
+
+            approve_col, reject_col = st.columns(2)
+            with approve_col:
+                if st.button("✅ Approve", use_container_width=True, key="approve_btn"):
+                    if not logged_in_name:
+                        st.warning("Please log in before approving.")
+                    else:
+                        approve_intervention(intervention_id, logged_in_name)
+                        st.session_state["approval_status"] = "approved"
+                        st.rerun()
+            with reject_col:
+                if st.button("❌ Reject", use_container_width=True, key="reject_btn"):
+                    reject_intervention(intervention_id)
+                    st.session_state["approval_status"] = "rejected"
+                    st.rerun()
+
+        elif approval_status == "approved":
+            st.success("🟢 Approved")
+        elif approval_status == "rejected":
+            st.error("🔴 Rejected — fetch a new plan if needed.")
+
+    st.divider()
+
+    # ── Latest approved intervention on record ────────────────────────────────
+    # Latest approved intervention on record
+    st.subheader("✅ Latest Approved Intervention on Record")
+    approved = get_latest_approved(selected_id)
+    if approved:
+        # Make sure you unpack only intervention fields
+        (int_id, sid, risk_band, priority, student_summary,
+        recommended_actions, priority_level, follow_up_plan,
+        status, approved_by, approved_at, generated_at) = approved
+
+        st.info(f"**Summary:** {student_summary or '—'}")
+        rc1, rc2, rc3 = st.columns(3)
+        rc1.metric("Risk Band",   risk_band or "—")
+        rc2.metric("Priority",    priority_level or "—")
+        rc3.metric("Approved By", approved_by or "—")
+        st.caption(f"Approved at: {approved_at}  |  Generated at: {generated_at}")
+    else:
+        st.caption("No approved intervention on record for this student yet.")
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# TAB 2 — PLACEMENT PLAN (Person B /generate-placement-plan)
+# ════════════════════════════════════════════════════════════════════════════════
+with tab2:
+    st.subheader("💼 Placement Plan")
+    st.caption("Generated by the Mentor Agent using Person D's target company data")
+
+    PLACEMENT_AGENT_URL = "https://sar-mentor-agent.onrender.com/generate-placement-plan"
+
+    if st.button("Generate Placement Plan", key="get_placement"):
+        with st.spinner("Generating placement plan..."):
+            try:
+                resp = requests.post(
+                    PLACEMENT_AGENT_URL,
+                    json={"student_id": selected_id},
+                    timeout=100,
+                )
+                resp.raise_for_status()
+                plan = resp.json()
+
+                placement_id = insert_placement(selected_id, plan)
+                st.session_state["placement_plan"]   = plan
+                st.session_state["placement_id"]     = placement_id
+                st.session_state["placement_status"] = "pending_approval"
+
+            except requests.exceptions.ConnectionError:
+                st.error("Could not reach the Mentor Agent.")
+            except requests.exceptions.Timeout:
+                st.error("Request timed out. The Mentor Agent took too long to respond.")
+            except requests.exceptions.HTTPError as e:
+                st.error(f"Mentor Agent returned an error: {e}")
+            except Exception as e:
+                st.error(f"Unexpected error: {e}")
+
+    if "placement_plan" in st.session_state:
+        plan             = st.session_state["placement_plan"]
+        placement_id     = st.session_state["placement_id"]
+        placement_status = st.session_state.get("placement_status", "pending_approval")
+        pp               = plan.get("placement_plan", {}).get("placement_plan", {})
+
+        # ── Target companies ─────────────────────────────────────────────
+        companies = plan.get("target_companies", [])
+        if companies:
+            st.markdown("**Target Companies**")
+            st.write(", ".join(companies))
+
+        st.divider()
+
+        # ── Readiness Summary ────────────────────────────────────────────
+        st.markdown("**Readiness Summary**")
+        st.info(pp.get("readiness_summary", "—"))
+
+        st.divider()
+
+        # ── Company Guidance ─────────────────────────────────────────────
+        st.markdown("**Company Selection Guidance**")
+        st.write(pp.get("company_selection_guidance", "—"))
+
+        st.divider()
+
+        # ── Preparation Steps ───────────────────────────────────────────
+        st.markdown("**Preparation Steps**")
+        steps = pp.get("preparation_steps", [])
+        if steps:
+            for i, step in enumerate(steps, 1):
+                st.markdown(f"**{i}. {step.get('title','')}**")
+                st.caption(f"Duration: {step.get('duration','—')} | Priority: {step.get('priority','—')}")
+                st.write(step.get("detail","—"))
+                st.divider()
+        else:
+            st.write("No preparation steps returned.")
+
+        # ── Timeline ─────────────────────────────────────────────────────
+        st.markdown("**Timeline**")
+        st.warning(pp.get("timeline", "—"))
+
+        st.divider()
+
+        # ── Risk Factors & Actions ───────────────────────────────────────
+        st.markdown("**Risk Factors & Actions**")
+        risks = pp.get("risk_factors_and_actions", [])
+        if risks:
+            for r in risks:
+                st.markdown(f"- **Risk:** {r.get('risk','—')}")
+                st.write(f"  → Action: {r.get('action','—')}")
+        else:
+            st.write("No risk factors returned.")
+
+        st.divider()
+
+        # ── Approval status ──────────────────────────────────────────────
+        st.markdown("**Approval Status**")
+
+        if placement_status == "pending_approval":
+            st.markdown("🟡 **Pending Approval**")
+
+            if logged_in_name:
+                st.caption(f"Approving as: **{logged_in_name}**")
+            else:
+                st.warning("Not logged in — cannot approve.")
+
+            approve_col, reject_col = st.columns(2)
+            with approve_col:
+                if st.button("✅ Approve", use_container_width=True, key="approve_placement"):
+                    if not logged_in_name:
+                        st.warning("Please log in before approving.")
+                    else:
+                        approve_placement(placement_id, logged_in_name)
+                        st.session_state["placement_status"] = "approved"
+                        st.rerun()
+            with reject_col:
+                if st.button("❌ Reject", use_container_width=True, key="reject_placement"):
+                    reject_placement(placement_id)
+                    st.session_state["placement_status"] = "rejected"
+                    st.rerun()
+
+        elif placement_status == "approved":
+            st.success("🟢 Approved")
+        elif placement_status == "rejected":
+            st.error("🔴 Rejected — generate a new plan if needed.")
+
+    st.divider()
+
+    # ── Latest approved placement on record ───────────────────────────────
+    st.subheader("✅ Latest Approved Placement on Record")
+    import json
+
+    approved_placement = get_latest_approved_placement(selected_id)
+    if approved_placement:
+        (ap_id, _sid, ap_companies_raw, ap_summary, ap_company_comparison,
+        ap_company_guidance, ap_steps, ap_timeline, ap_risks, ap_data_note,
+        ap_status, ap_approved_by, ap_approved_at, ap_generated_at) = approved_placement
+
+        # ── Outdated check — compare approved companies vs current from Person D ──
+        try:
+            d_resp = requests.get(
+                f"https://sar-roadmap-agent.onrender.com/student-target-companies/{selected_id}",
+                timeout=10
+            )
+            if d_resp.status_code == 200:
+                current_companies = set(d_resp.json().get("target_companies", []))
+                approved_companies = set(json.loads(ap_companies_raw)) if ap_companies_raw else set()
+                if current_companies and current_companies != approved_companies:
+                    st.warning("⚠️ **Outdated** — Student's target companies have changed since this plan was approved. Consider generating a new placement plan.")
+        except Exception:
+            pass  # silently skip if Person D's API is down — don't block the page
+
+        st.info(f"**Summary:** {ap_summary or '—'}")
+
+        # Target companies
+        if ap_companies_raw:
+            companies = json.loads(ap_companies_raw)
+            if companies:
+                st.write("**Target Companies:**", ", ".join(companies))
+
+
+    # Preparation steps
+        if ap_steps:
+            # If it's a string, decode JSON → list
+            steps = json.loads(ap_steps) if isinstance(ap_steps, str) else ap_steps
+            st.markdown("**Preparation Steps**")
+            for i, step in enumerate(steps, 1):
+                st.markdown(f"**{i}. {step.get('title','')}**")
+                st.caption(f"Duration: {step.get('duration','—')} | Priority: {step.get('priority','—')}")
+                st.write(step.get("detail","—"))
+                st.divider()
+
+        # Risk factors
+        if ap_risks:
+            risks = json.loads(ap_risks) if isinstance(ap_risks, str) else ap_risks
+            st.markdown("**Risk Factors & Actions**")
+            for r in risks:
+                st.markdown(f"- **Risk:** {r.get('risk','—')}")
+                st.write(f"  → Action: {r.get('action','—')}")
+
+
+        # Timeline
+        st.markdown("**Timeline**")
+        st.warning(ap_timeline or "—")
+
+        # Metadata
+        rc1, rc2 = st.columns(2)
+        rc1.metric("Approved By", ap_approved_by or "—")
+        rc2.metric("Approved At", str(ap_approved_at) if ap_approved_at else "—")
+        st.caption(f"Generated at: {ap_generated_at}")
+    else:
+        st.caption("No approved placement plan on record for this student yet.")

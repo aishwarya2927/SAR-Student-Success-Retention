@@ -3,4 +3,5 @@ uvicorn
 httpx
 pydantic
 psycopg2-binary
+python-dotenv
 python-multipart
