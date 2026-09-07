@@ -82,7 +82,17 @@ class DatabaseConnectionWrapper:
 
 # Path to the shared SQLite database
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "mentor-agent", "students.db"))
-MENTOR_AGENT_URL = os.environ.get("MENTOR_AGENT_URL", "http://127.0.0.1:8000")
+MENTOR_AGENT_URL = os.environ.get("MENTOR_AGENT_URL", "https://sar-mentor-agent.onrender.com")
+
+def extract_error_detail(response) -> str:
+    """Safely extracts error message from HTTP response without raising JSONDecodeError."""
+    try:
+        data = response.json()
+        if isinstance(data, dict):
+            return data.get("detail", response.text)
+        return str(data)
+    except Exception:
+        return response.text or f"Upstream service returned HTTP {response.status_code}"
 
 def get_db_connection():
     if IS_POSTGRES:
@@ -164,6 +174,18 @@ def init_db():
     )
     """)
 
+    # Seed default faculty member if not already present
+    try:
+        cursor.execute("SELECT email FROM faculty WHERE LOWER(email) = ?", ('sharma@spit.ac.in',))
+        if not cursor.fetchone():
+            cursor.execute("""
+                INSERT INTO faculty (email, name, password, department)
+                VALUES (?, ?, ?, ?)
+            """, ('sharma@spit.ac.in', 'Dr. Sharma', 'password123', 'Computer Engineering'))
+            logger.info("Seeded default faculty member: sharma@spit.ac.in")
+    except Exception as e:
+        logger.warning(f"Default faculty seed check: {e}")
+
     # Create intervention_reports table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS intervention_reports (
@@ -176,6 +198,27 @@ def init_db():
         priority_level TEXT,
         follow_up_plan TEXT,
         recommended_resources TEXT,
+        status TEXT DEFAULT 'pending_approval',
+        approved_by TEXT,
+        approved_at TEXT,
+        generated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (student_id) REFERENCES students(student_id)
+    )
+    """)
+
+    # Create placement_reports table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS placement_reports (
+        placement_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id TEXT NOT NULL,
+        target_companies TEXT,
+        readiness_summary TEXT,
+        company_comparison TEXT,
+        company_selection_guidance TEXT,
+        preparation_steps TEXT,
+        timeline TEXT,
+        risk_factors TEXT,
+        data_verification_note TEXT,
         status TEXT DEFAULT 'pending_approval',
         approved_by TEXT,
         approved_at TEXT,
@@ -832,39 +875,70 @@ async def proxy_retry_outreach(student_id: str):
 @app.post("/api/interventions/{intervention_id}/approve")
 async def proxy_approve_intervention(intervention_id: int, req: ApprovalRequest):
     """
-    Proxies the intervention approval to the Mentor Agent server.
+    Approves the intervention. First attempts to notify Mentor Agent for outreach triggering;
+    if Mentor Agent is offline/slow, falls back to direct database approval.
     """
+    # 1. Try remote Mentor Agent first (to trigger email outreach workflows)
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{MENTOR_AGENT_URL}/api/interventions/{intervention_id}/approve",
                 json={"approved_by": req.approved_by},
-                timeout=30
+                timeout=20
             )
-            if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
-            return response.json()
-    except httpx.RequestError as e:
-        logger.error(f"Failed to approve intervention: {e}")
-        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+            if response.status_code == 200:
+                return response.json()
+            logger.warning(f"Mentor agent returned status {response.status_code} during approval: {response.text}")
+    except Exception as e:
+        logger.warning(f"Mentor agent approval proxy failed: {e}. Falling back to direct database update.")
+
+    # 2. Local database fallback
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        now = datetime.datetime.now().isoformat()
+        cursor.execute("""
+            UPDATE intervention_reports
+            SET status = 'approved', approved_by = ?, approved_at = ?
+            WHERE intervention_id = ?
+        """, (req.approved_by, now, intervention_id))
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": "Intervention approved successfully."}
+    except Exception as e:
+        logger.error(f"Failed to approve intervention in database: {e}")
+        raise HTTPException(status_code=500, detail="Failed to approve intervention.")
 
 @app.post("/api/interventions/{intervention_id}/reject")
 async def proxy_reject_intervention(intervention_id: int):
     """
-    Proxies the intervention rejection to the Mentor Agent server.
+    Rejects the intervention. Falls back to direct database rejection if Mentor Agent is unreachable.
     """
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{MENTOR_AGENT_URL}/api/interventions/{intervention_id}/reject",
-                timeout=30
+                timeout=20
             )
-            if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
-            return response.json()
-    except httpx.RequestError as e:
-        logger.error(f"Failed to reject intervention: {e}")
-        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+            if response.status_code == 200:
+                return response.json()
+    except Exception as e:
+        logger.warning(f"Mentor agent reject proxy failed: {e}. Falling back to direct database update.")
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE intervention_reports
+            SET status = 'rejected'
+            WHERE intervention_id = ?
+        """, (intervention_id,))
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": "Intervention rejected successfully."}
+    except Exception as e:
+        logger.error(f"Failed to reject intervention in database: {e}")
+        raise HTTPException(status_code=500, detail="Failed to reject intervention.")
 
 
 @app.get("/api/policies/{policy_name}")
@@ -876,78 +950,126 @@ async def proxy_get_policy(policy_name: str):
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{MENTOR_AGENT_URL}/api/policies/{policy_name}",
-                timeout=10
+                timeout=15
             )
             if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
+                raise HTTPException(status_code=response.status_code, detail=extract_error_detail(response))
             return response.json()
+    except HTTPException:
+        raise
     except httpx.RequestError as e:
         logger.error(f"Failed to fetch policy: {e}")
         raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
 
+# ── Direct Database Faculty Authentication ──────────────────────────────────
 @app.post("/api/faculty/register")
-async def proxy_register_faculty(req: FacultyRegisterRequest):
+def register_faculty(req: FacultyRegisterRequest):
+    """Registers a new faculty member directly in the database."""
+    email = req.email.strip().lower()
+    if not email.endswith("@spit.ac.in"):
+        raise HTTPException(status_code=400, detail="Only email accounts with domain spit.ac.in are allowed to register.")
+    
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{MENTOR_AGENT_URL}/api/faculty/register",
-                json=req.dict(),
-                timeout=30
-            )
-            if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.json().get("detail", response.text))
-            return response.json()
-    except httpx.RequestError as e:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT email FROM faculty WHERE LOWER(email) = ?", (email,))
+        if cursor.fetchone():
+            conn.close()
+            raise HTTPException(status_code=400, detail="Email is already registered.")
+        
+        cursor.execute("""
+            INSERT INTO faculty (name, email, password, department)
+            VALUES (?, ?, ?, ?)
+        """, (req.name.strip(), email, req.password.strip(), req.department.strip()))
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": "Faculty registered successfully."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        err_name = type(e).__name__
+        if "IntegrityError" in err_name or "UniqueViolation" in err_name:
+            raise HTTPException(status_code=400, detail="Email is already registered.")
         logger.error(f"Failed to register faculty: {e}")
-        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+        raise HTTPException(status_code=500, detail="Failed to register faculty.")
 
 @app.post("/api/faculty/login")
-async def proxy_login_faculty(req: FacultyLoginRequest):
+def login_faculty(req: FacultyLoginRequest):
+    """Authenticates a faculty member directly from the database."""
+    email = req.email.strip().lower()
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{MENTOR_AGENT_URL}/api/faculty/login",
-                json=req.dict(),
-                timeout=30
-            )
-            if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.json().get("detail", response.text))
-            return response.json()
-    except httpx.RequestError as e:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT name, email, department FROM faculty
+            WHERE LOWER(email) = ? AND password = ?
+        """, (email, req.password.strip()))
+        row = cursor.fetchone()
+        conn.close()
+        if not row:
+            raise HTTPException(status_code=401, detail="Invalid email or password.")
+        
+        user_dict = dict(row)
+        return {
+            "status": "success",
+            "user": {
+                "name": user_dict.get("name"),
+                "email": user_dict.get("email"),
+                "department": user_dict.get("department")
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
         logger.error(f"Failed to log in faculty: {e}")
-        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+        raise HTTPException(status_code=500, detail="Failed to log in faculty.")
 
 @app.post("/api/students/{student_id}/claim")
-async def proxy_claim_student(student_id: str, req: ClaimRequest):
+def claim_student(student_id: str, req: ClaimRequest):
+    """Assigns mentoring responsibility of a student to a faculty member."""
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{MENTOR_AGENT_URL}/api/students/{student_id}/claim",
-                json=req.dict(),
-                timeout=30
-            )
-            if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.json().get("detail", response.text))
-            return response.json()
-    except httpx.RequestError as e:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE students
+            SET assigned_faculty_email = ?
+            WHERE student_id = ?
+        """, (req.faculty_email.strip().lower(), student_id))
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": "Student claimed successfully."}
+    except Exception as e:
         logger.error(f"Failed to claim student: {e}")
-        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+        raise HTTPException(status_code=500, detail="Failed to claim student.")
 
 @app.post("/api/interventions/{intervention_id}/edit")
-async def proxy_edit_intervention(intervention_id: int, req: EditInterventionRequest):
+def edit_intervention(intervention_id: int, req: EditInterventionRequest):
+    """Edits an intervention report directly in the database."""
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{MENTOR_AGENT_URL}/api/interventions/{intervention_id}/edit",
-                json=req.dict(),
-                timeout=30
-            )
-            if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.json().get("detail", response.text))
-            return response.json()
-    except httpx.RequestError as e:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE intervention_reports
+            SET student_summary = ?,
+                recommended_actions = ?,
+                priority_level = ?,
+                follow_up_plan = ?,
+                recommended_resources = ?
+            WHERE intervention_id = ?
+        """, (
+            req.student_summary,
+            json.dumps(req.recommended_actions),
+            req.priority_level,
+            req.follow_up_plan,
+            json.dumps([res.dict() for res in req.recommended_resources]),
+            intervention_id
+        ))
+        conn.commit()
+        conn.close()
+        return {"status": "success", "message": "Intervention report edited successfully."}
+    except Exception as e:
         logger.error(f"Failed to edit intervention: {e}")
-        raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+        raise HTTPException(status_code=500, detail="Failed to edit intervention report.")
 
 
 class ChatRequest(BaseModel):
@@ -965,8 +1087,10 @@ async def proxy_verify_resume(student_id: str, file: UploadFile = File(...)):
                 timeout=120
             )
             if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
+                raise HTTPException(status_code=response.status_code, detail=extract_error_detail(response))
             return response.json()
+    except HTTPException:
+        raise
     except httpx.RequestError as e:
         logger.error(f"Failed to proxy verify resume: {e}")
         raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
@@ -987,8 +1111,10 @@ async def proxy_verify_certificate(student_id: str, file: UploadFile = File(...)
                 timeout=120
             )
             if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
+                raise HTTPException(status_code=response.status_code, detail=extract_error_detail(response))
             return response.json()
+    except HTTPException:
+        raise
     except httpx.RequestError as e:
         logger.error(f"Failed to proxy verify certificate: {e}")
         raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
@@ -1002,8 +1128,10 @@ async def proxy_get_chat(student_id: str):
                 timeout=30
             )
             if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
+                raise HTTPException(status_code=response.status_code, detail=extract_error_detail(response))
             return response.json()
+    except HTTPException:
+        raise
     except httpx.RequestError as e:
         logger.error(f"Failed to proxy get chat: {e}")
         raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
@@ -1018,8 +1146,10 @@ async def proxy_post_chat(student_id: str, req: ChatRequest):
                 timeout=60
             )
             if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
+                raise HTTPException(status_code=response.status_code, detail=extract_error_detail(response))
             return response.json()
+    except HTTPException:
+        raise
     except httpx.RequestError as e:
         logger.error(f"Failed to proxy post chat: {e}")
         raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
@@ -1033,11 +1163,169 @@ async def proxy_clear_chat(student_id: str):
                 timeout=30
             )
             if response.status_code != 200:
-                raise HTTPException(status_code=response.status_code, detail=response.text)
+                raise HTTPException(status_code=response.status_code, detail=extract_error_detail(response))
             return response.json()
+    except HTTPException:
+        raise
     except httpx.RequestError as e:
         logger.error(f"Failed to proxy clear chat: {e}")
         raise HTTPException(status_code=503, detail="Mentor Agent backend is offline.")
+
+
+# ── Person C API Endpoints for Person D (Student Agent) ──────────────────────
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "dashboard-api"}
+
+@app.get("/intervention/{student_id}")
+def get_approved_intervention(student_id: str):
+    """
+    Returns the latest approved intervention plan for a student.
+    Used by Person D's student roadmap agent.
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            intervention_id,
+            student_id,
+            risk_band,
+            prediction_confidence,
+            student_summary,
+            recommended_actions,
+            priority_level,
+            follow_up_plan,
+            status,
+            approved_by,
+            approved_at,
+            generated_at
+        FROM intervention_reports
+        WHERE student_id = ? AND status = 'approved'
+        ORDER BY approved_at DESC
+        LIMIT 1
+    """, (student_id,))
+    row = cur.fetchone()
+    conn.close()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No approved intervention found for student {student_id}"
+        )
+
+    r = dict(row)
+    actions = r.get("recommended_actions")
+    if isinstance(actions, str):
+        try:
+            actions = json.loads(actions)
+        except Exception:
+            actions = [actions]
+    elif not actions:
+        actions = []
+
+    return {
+        "intervention_id":       r.get("intervention_id"),
+        "student_id":            r.get("student_id"),
+        "risk_band":             r.get("risk_band"),
+        "prediction_confidence": r.get("prediction_confidence"),
+        "student_summary":       r.get("student_summary"),
+        "recommended_actions":   actions,
+        "priority_level":        r.get("priority_level"),
+        "follow_up_plan":        r.get("follow_up_plan"),
+        "status":                r.get("status"),
+        "approved_by":           r.get("approved_by"),
+        "approved_at":           str(r.get("approved_at")) if r.get("approved_at") else None,
+        "generated_at":          str(r.get("generated_at")) if r.get("generated_at") else None,
+    }
+
+@app.get("/placement/{student_id}")
+def get_approved_placement(student_id: str):
+    """
+    Returns the latest approved placement plan for a student.
+    Used by Person D's student roadmap agent.
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    row = None
+    try:
+        cur.execute("""
+            SELECT
+                placement_id,
+                student_id,
+                target_companies,
+                readiness_summary,
+                company_comparison,
+                company_selection_guidance,
+                preparation_steps,
+                timeline,
+                risk_factors,
+                data_verification_note,
+                status,
+                approved_by,
+                approved_at,
+                generated_at
+            FROM placement_reports
+            WHERE student_id = ? AND status = 'approved'
+            ORDER BY approved_at DESC
+            LIMIT 1
+        """, (student_id,))
+        row = cur.fetchone()
+    except Exception as e:
+        logger.warning(f"Error querying placement_reports: {e}")
+        row = None
+    finally:
+        conn.close()
+
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No approved placement plan found for student {student_id}"
+        )
+
+    r = dict(row)
+    companies = r.get("target_companies")
+    if isinstance(companies, str):
+        try:
+            companies = json.loads(companies)
+        except Exception:
+            companies = companies.split(",") if companies else []
+    elif not companies:
+        companies = []
+
+    prep_steps = r.get("preparation_steps")
+    if isinstance(prep_steps, str):
+        try:
+            prep_steps = json.loads(prep_steps)
+        except Exception:
+            prep_steps = []
+    elif not prep_steps:
+        prep_steps = []
+
+    risk_factors = r.get("risk_factors")
+    if isinstance(risk_factors, str):
+        try:
+            risk_factors = json.loads(risk_factors)
+        except Exception:
+            risk_factors = []
+    elif not risk_factors:
+        risk_factors = []
+
+    return {
+        "placement_id":               r.get("placement_id"),
+        "student_id":                 r.get("student_id"),
+        "target_companies":           companies,
+        "readiness_summary":          r.get("readiness_summary"),
+        "company_comparison":         r.get("company_comparison"),
+        "company_selection_guidance": r.get("company_selection_guidance"),
+        "preparation_steps":          prep_steps,
+        "timeline":                   r.get("timeline"),
+        "risk_factors":               risk_factors,
+        "data_verification_note":     r.get("data_verification_note"),
+        "status":                     r.get("status"),
+        "approved_by":                r.get("approved_by"),
+        "approved_at":                str(r.get("approved_at")) if r.get("approved_at") else None,
+        "generated_at":               str(r.get("generated_at")) if r.get("generated_at") else None,
+    }
 
 
 # ── Serve Frontend ──────────────────────────────────────────────────────────

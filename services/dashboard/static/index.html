@@ -2665,8 +2665,16 @@
                     localStorage.setItem("facultyUser", JSON.stringify(data.user));
                     initDashboardSession();
                 } else {
-                    const err = await res.json();
-                    alert(`Login Failed: ${err.detail || "Invalid credentials"}`);
+                    let errMsg = "Invalid credentials";
+                    try {
+                        const err = await res.json();
+                        errMsg = err.detail || errMsg;
+                    } catch (e) {
+                        try {
+                            errMsg = await res.text() || errMsg;
+                        } catch (e2) {}
+                    }
+                    alert(`Login Failed: ${errMsg}`);
                 }
             } catch (err) {
                 alert(`Error: ${err.message}`);
@@ -2699,8 +2707,16 @@
                     alert("Registration successful! Please log in.");
                     toggleAuthMode(false);
                 } else {
-                    const err = await res.json();
-                    alert(`Registration Failed: ${err.detail || "Error occurred"}`);
+                    let errMsg = "Registration failed";
+                    try {
+                        const err = await res.json();
+                        errMsg = err.detail || errMsg;
+                    } catch (e) {
+                        try {
+                            errMsg = await res.text() || errMsg;
+                        } catch (e2) {}
+                    }
+                    alert(`Registration Failed: ${errMsg}`);
                 }
             } catch (err) {
                 alert(`Error: ${err.message}`);
