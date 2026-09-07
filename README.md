@@ -3,7 +3,8 @@
 ASRA is an end-to-end, decoupled multi-service educational decision-support and student mentoring platform. It is designed to predict academic dropouts, explain individual student risk drivers, automate academic verification tasks using Multimodal AI, and provide a stateful conversational coaching interface with custom career roadmaps.
 
 ## 🔗 Live Deployment
-*   **Production Deployment URL**: *[Deploy Link - To be updated]*
+*   **Main Student & Mentor Portal**: https://successpath.onrender.com
+*   **Faculty Dashboard**: https://successpath-faculty.onrender.com
 
 ---
 

@@ -2583,7 +2583,11 @@
         }
 
         function goToFacultyDashboard() {
-            window.location.href = window.location.origin.replace(':8000', ':8080');
+            if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+                window.location.href = "http://" + window.location.hostname + ":8080";
+            } else {
+                window.location.href = "https://successpath-faculty.onrender.com";
+            }
         }
 
         function logoutRole() {
@@ -3462,7 +3466,7 @@
             if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
                 window.location.href = "http://" + window.location.hostname + ":8080";
             } else {
-                window.location.href = "https://faculty-dashboard-e2ke.onrender.com";
+                window.location.href = "https://successpath-faculty.onrender.com";
             }
         }
 
